@@ -1,0 +1,48 @@
+{
+  "name": "filmospere",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build:data": "tsx src/scripts/buildData.ts",
+    "fetch:movies": "tsx src/scripts/fetchMovies.ts",
+    "backup": "tsx src/scripts/safe_backup.ts",
+    "backupM": "tsx src/scripts/safe_backup.ts --movies",
+    "backupA": "tsx src/scripts/safe_backup.ts --articles",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=6144 tsc -b && vite build",
+    "lint": "cross-env NODE_OPTIONS=--max-old-space-size=6144 eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emailjs/browser": "^4.4.1",
+    "@supabase/supabase-js": "^2.87.1",
+    "axios": "^1.13.2",
+    "dotenv": "^17.2.3",
+    "fuse.js": "^7.1.0",
+    "lucide-react": "^0.555.0",
+    "openai": "^6.14.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-easy-crop": "^5.5.6",
+    "react-helmet-async": "^2.0.5",
+    "react-router-dom": "^7.9.6",
+    "tmdb-ts": "^2.0.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.3",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4"
+  }
+}

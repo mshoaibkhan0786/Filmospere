@@ -1,0 +1,170 @@
+[
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=US",
+    "icon": "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg",
+    "type": "flatrate",
+    "country": "US",
+    "platform": "Netflix"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=US",
+    "icon": "https://image.tmdb.org/t/p/original/pvske1MyAoymrs5bguRfVqYiM9a.jpg",
+    "type": "flatrate",
+    "country": "US",
+    "platform": "Amazon Prime Video"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=US",
+    "icon": "https://image.tmdb.org/t/p/original/dpR8r13zWDeUR0QkzWidrdMxa56.jpg",
+    "type": "flatrate",
+    "country": "US",
+    "platform": "Netflix Standard with Ads"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=US",
+    "icon": "https://image.tmdb.org/t/p/original/cqgeSQHqKEkfcmsiy7GoCnf1Q2I.jpg",
+    "type": "flatrate",
+    "country": "US",
+    "platform": "Eros Now Select Apple TV Channel"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=US",
+    "icon": "https://image.tmdb.org/t/p/original/8aBqoNeGGr0oSA85iopgNZUOTOc.jpg",
+    "type": "flatrate",
+    "country": "US",
+    "platform": "Amazon Prime Video with Ads"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=IN",
+    "icon": "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg",
+    "type": "flatrate",
+    "country": "IN",
+    "platform": "Netflix"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=IN",
+    "icon": "https://image.tmdb.org/t/p/original/pvske1MyAoymrs5bguRfVqYiM9a.jpg",
+    "type": "flatrate",
+    "country": "IN",
+    "platform": "Amazon Prime Video"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=IN",
+    "icon": "https://image.tmdb.org/t/p/original/8aBqoNeGGr0oSA85iopgNZUOTOc.jpg",
+    "type": "flatrate",
+    "country": "IN",
+    "platform": "Amazon Prime Video with Ads"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=IN",
+    "icon": "https://image.tmdb.org/t/p/original/SPnB1qiCkYfirS2it3hZORwGVn.jpg",
+    "type": "rent",
+    "country": "IN",
+    "platform": "Apple TV"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=IN",
+    "icon": "https://image.tmdb.org/t/p/original/seGSXajazLMCKGB5hnRCidtjay1.jpg",
+    "type": "rent",
+    "country": "IN",
+    "platform": "Amazon Video"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=IN",
+    "icon": "https://image.tmdb.org/t/p/original/SPnB1qiCkYfirS2it3hZORwGVn.jpg",
+    "type": "buy",
+    "country": "IN",
+    "platform": "Apple TV"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=GB",
+    "icon": "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg",
+    "type": "flatrate",
+    "country": "GB",
+    "platform": "Netflix"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=GB",
+    "icon": "https://image.tmdb.org/t/p/original/pvske1MyAoymrs5bguRfVqYiM9a.jpg",
+    "type": "flatrate",
+    "country": "GB",
+    "platform": "Amazon Prime Video"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=GB",
+    "icon": "https://image.tmdb.org/t/p/original/6xQrNQoTmXWhaJj4O8u2FRsXBXs.jpg",
+    "type": "flatrate",
+    "country": "GB",
+    "platform": "Eros Now Amazon Channel"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=GB",
+    "icon": "https://image.tmdb.org/t/p/original/dpR8r13zWDeUR0QkzWidrdMxa56.jpg",
+    "type": "flatrate",
+    "country": "GB",
+    "platform": "Netflix Standard with Ads"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=GB",
+    "icon": "https://image.tmdb.org/t/p/original/8aBqoNeGGr0oSA85iopgNZUOTOc.jpg",
+    "type": "flatrate",
+    "country": "GB",
+    "platform": "Amazon Prime Video with Ads"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=AU",
+    "icon": "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg",
+    "type": "flatrate",
+    "country": "AU",
+    "platform": "Netflix"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=AU",
+    "icon": "https://image.tmdb.org/t/p/original/pvske1MyAoymrs5bguRfVqYiM9a.jpg",
+    "type": "flatrate",
+    "country": "AU",
+    "platform": "Amazon Prime Video"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=AU",
+    "icon": "https://image.tmdb.org/t/p/original/dpR8r13zWDeUR0QkzWidrdMxa56.jpg",
+    "type": "flatrate",
+    "country": "AU",
+    "platform": "Netflix Standard with Ads"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=AU",
+    "icon": "https://image.tmdb.org/t/p/original/8aBqoNeGGr0oSA85iopgNZUOTOc.jpg",
+    "type": "flatrate",
+    "country": "AU",
+    "platform": "Amazon Prime Video with Ads"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=CA",
+    "icon": "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg",
+    "type": "flatrate",
+    "country": "CA",
+    "platform": "Netflix"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=CA",
+    "icon": "https://image.tmdb.org/t/p/original/pvske1MyAoymrs5bguRfVqYiM9a.jpg",
+    "type": "flatrate",
+    "country": "CA",
+    "platform": "Amazon Prime Video"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=CA",
+    "icon": "https://image.tmdb.org/t/p/original/dpR8r13zWDeUR0QkzWidrdMxa56.jpg",
+    "type": "flatrate",
+    "country": "CA",
+    "platform": "Netflix Standard with Ads"
+  },
+  {
+    "url": "https://www.themoviedb.org/movie/185008/watch?locale=CA",
+    "icon": "https://image.tmdb.org/t/p/original/8aBqoNeGGr0oSA85iopgNZUOTOc.jpg",
+    "type": "flatrate",
+    "country": "CA",
+    "platform": "Amazon Prime Video with Ads"
+  }
+]

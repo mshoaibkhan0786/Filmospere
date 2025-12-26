@@ -1,0 +1,952 @@
+:root {
+  --primary-color: #e50914;
+  --background-color: #141414;
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --card-bg: #1f1f1f;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 5px;
+  border: 2px solid var(--background-color);
+  /* Creates padding effect */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Horizontal Scroll Layout */
+.section-mobile-layout,
+.mobile-tags-section {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .section-mobile-layout {
+    display: block;
+  }
+
+  .section-desktop-layout {
+    display: none !important;
+  }
+
+  .mobile-tags-section {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0.8rem;
+    order: -2;
+    margin-bottom: 1.5rem;
+    scrollbar-width: none;
+    /* Hide scrollbar Firefox */
+    -ms-overflow-style: none;
+    /* Hide scrollbar IE/Edge */
+    padding-right: 16px;
+    /* Peek effect padding */
+  }
+
+  .mobile-tags-section::-webkit-scrollbar {
+    display: none;
+    /* Hide scrollbar Chrome/Safari */
+  }
+
+  .mobile-tags-section>a {
+    flex-shrink: 0;
+    min-height: auto !important;
+    /* Override global touch target rule */
+    height: 36px !important;
+    /* Enforce match with desktop */
+  }
+
+  /* Split Row Styling */
+  .mobile-scroll-row {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0px;
+    /* Reset default */
+    gap: 12px;
+  }
+
+  .section-mobile-layout .mobile-scroll-row:last-child {
+    padding-bottom: 1.5rem;
+    /* Only last row gets bottom padding */
+  }
+
+  /* Ensure card sizing is consistent using VIEWPORT width (vw) */
+  /* This works even inside a max-content container */
+  .mobile-scroll-row {
+    gap: 12px;
+    /* Ensure gap exists */
+  }
+
+  .mobile-scroll-row>* {
+    /* 3 Columns Logic (Default for < 768px) */
+    /* 100vw / 3 = 33.3vw. Minus padding/gaps (~32px) -> ~28vw */
+    width: 28vw !important;
+    min-width: 28vw !important;
+    max-width: 28vw !important;
+    flex: 0 0 auto;
+  }
+
+  /* Force override for the card class specifically if it has !important elsewhere */
+  .mobile-scroll-row .horizontal-scroll-card {
+    width: 28vw !important;
+    min-width: 28vw !important;
+    max-width: 28vw !important;
+  }
+
+  /* Completely hide scrollbars for mobile containers */
+  .mobile-scroll-row,
+  .mobile-scroll-container {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
+  .mobile-scroll-row::-webkit-scrollbar,
+  .mobile-scroll-container::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+/* Specific breakpoint for smaller phones (< 500px) */
+@media (max-width: 500px) {
+  .mobile-scroll-row>* {
+    /* 2 Columns Logic */
+    /* 100vw / 2 = 50vw. Minus padding/gaps (~32px) -> ~44vw */
+    width: 44vw !important;
+    min-width: 44vw !important;
+    max-width: 44vw !important;
+  }
+
+  .mobile-scroll-row .horizontal-scroll-card {
+    width: 44vw !important;
+    min-width: 44vw !important;
+    max-width: 44vw !important;
+  }
+}
+
+.horizontal-scroll-layout {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 1.5rem;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  /* For smooth scrolling on iOS */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.horizontal-scroll-layout::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+.horizontal-scroll-layout>* {
+  flex: 0 0 auto;
+  /* Prevent shrinking */
+  width: 220px;
+  /* Fixed width for cards in horizontal scroll */
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+button {
+  font-family: inherit;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Responsive Components */
+.movie-content-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4rem;
+}
+
+.movie-main-col {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.movie-sidebar {
+  width: 100%;
+  max-width: 400px;
+  flex-shrink: 0;
+}
+
+/* Navbar Responsive Helpers */
+.navbar-search-container {
+  position: relative;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+/* Base Mobile Modifications */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .grid-layout {
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+
+  .movie-content-wrapper {
+    gap: 2rem;
+    flex-direction: column;
+  }
+
+  .movie-main-col {
+    min-width: 100%;
+    order: 2;
+    /* Main content comes second */
+  }
+
+  .movie-sidebar {
+    max-width: 100%;
+    order: -1;
+    /* Sidebar (Info) comes first */
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-layout {
+    gap: 0.8rem;
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* Navbar Search States */
+.navbar-search-expanded {
+  width: 300px;
+  background-color: rgba(0, 0, 0, 0.8);
+  border: 1px solid #333;
+}
+
+.navbar-search-collapsed {
+  width: 40px;
+  background-color: transparent;
+  border: 1px solid transparent;
+}
+
+/* Mobile Search Adjustment */
+@media (max-width: 768px) {
+  .navbar-search-expanded {
+    width: 200px;
+  }
+}
+
+/* 6-Column Grid for Filmography */
+.cols-6-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 1000px) {
+  .cols-6-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+
+
+@media (max-width: 500px) {
+  .cols-6-grid {
+    gap: 10px;
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* Actor Page Layout */
+.actor-hero {
+  display: flex;
+  gap: 4rem;
+  align-items: center;
+  padding-top: 60px;
+  padding-bottom: 4rem;
+}
+
+.actor-image-container {
+  flex-shrink: 0;
+  width: 340px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  background-color: #202020;
+  position: relative;
+  z-index: 10;
+  aspect-ratio: 2/3;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  max-height: 80vh;
+}
+
+.actor-image-container:hover {
+  transform: scale(1.02) translateY(-5px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+}
+
+.actor-info {
+  flex: 1;
+  text-align: left;
+  padding-top: 1rem;
+}
+
+.actor-stats-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 2rem;
+}
+
+@media (max-width: 900px) {
+  .actor-hero {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-top: 100px;
+    gap: 2rem;
+  }
+
+  .actor-info {
+    text-align: center;
+    width: 100%;
+    padding-top: 0;
+  }
+
+  .actor-image-container {
+    width: 240px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+
+  .actor-stats-grid {
+    justify-content: center;
+    gap: 2rem;
+  }
+}
+
+/* =========================================
+   MOBILE MODERNIZATION LAYER
+   Strictly scoped to max-width: 768px
+   ========================================= */
+
+@media (max-width: 768px) {
+
+  /* Container becomes fuller width on mobile */
+  .container {
+    padding: 0 16px;
+    /* modern app standard padding */
+    width: 100%;
+    overflow-x: hidden;
+    /* Prevent horizontal scroll glitches */
+  }
+
+  /* Typography Scales */
+  h1 {
+    font-size: 2.5rem !important;
+    /* Visual clamp for hero titles */
+  }
+
+  h2 {
+    font-size: 1.5rem !important;
+  }
+
+  p {
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Modern Grid Logic for Mobile */
+  .grid-layout {
+    gap: 12px;
+    grid-template-columns: repeat(2, 1fr) !important;
+    /* Force 2 columns */
+  }
+
+  /* Horizontal Scroll improvements */
+  .horizontal-scroll-layout {
+    gap: 12px;
+    padding-bottom: 2rem;
+    padding-right: 16px;
+    /* Peek effect */
+  }
+
+  .horizontal-scroll-layout>* {
+    width: 140px;
+    /* Slimmer cards for mobile to see more options */
+  }
+
+  /* Mobile Utils */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-full-width {
+    width: 100vw;
+    margin-left: -16px;
+    /* Counteract container padding */
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Touch Targets */
+  button,
+  a {
+    min-height: 44px;
+    /* Accessible touch target */
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-layout {
+    gap: 8px;
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Special adjustment for very small screens if 3 cols is too tight */
+  @media (max-width: 350px) {
+    .grid-layout {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+  }
+}
+
+/* =========================================
+   COMPONENT SPECIFIC CLASSES
+   ========================================= */
+
+/* MovieHero Title */
+.movie-hero-title {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  /* Original Desktop Value */
+  font-weight: 800;
+  margin-bottom: 1rem;
+  line-height: 1.1;
+  text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.5);
+  color: white;
+}
+
+/* Horizontal Scroll Card */
+/* Horizontal Scroll Card */
+.horizontal-scroll-card {
+  flex: 0 0 auto;
+  width: 200px;
+  /* Original Desktop Value */
+}
+
+/* Featured Hero Actions */
+.featured-actions-container {
+  display: flex;
+  flex-wrap: wrap;
+  /* Default desktop */
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* Mobile Overrides for Featured Hero */
+@media (max-width: 768px) {
+  .featured-actions-container {
+    flex-wrap: nowrap !important;
+    /* Force single row on mobile */
+    gap: 0.8rem !important;
+  }
+}
+
+/* Home Search Results */
+.home-search-results {
+  margin-top: 120px;
+  /* Original Desktop Value */
+}
+
+/* Section Page Title */
+.section-title {
+  font-size: 2.5rem;
+  /* Original Desktop Value */
+}
+
+/* Mobile Overrides for Components */
+@media (max-width: 768px) {
+
+  /* Navbar Search Expanded - Full Width */
+  /* Navbar Search Expanded - Full Width */
+  /* Navbar Search Expanded - Full Width */
+  .navbar-search-container.navbar-search-expanded {
+    width: calc(100vw - 32px) !important;
+    max-width: none !important;
+    position: absolute;
+    right: 16px;
+    z-index: 200;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 48px;
+    /* Larger touch target */
+    margin: 0;
+    background-color: #141414;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+  }
+
+  /* Reveal Hamburger on Mobile */
+  .mobile-menu-trigger {
+    display: block !important;
+  }
+
+  /* Hide Desktop Links on Mobile */
+  .desktop-nav-links {
+    display: none !important;
+  }
+
+  /* Navbar Logo Optimization */
+  .logo-text {
+    display: none !important;
+  }
+
+  /* Movie Hero Title */
+  .movie-hero-title {
+    font-size: 2.2rem !important;
+    margin-bottom: 0.5rem;
+  }
+
+  .movie-hero-title-wrapper {
+    margin-bottom: 6rem !important;
+  }
+
+  /* Home Search Results - Less spacing */
+  .home-search-results {
+    margin-top: 80px !important;
+  }
+
+  /* Section Page Title */
+  .section-title {
+    font-size: 2rem !important;
+  }
+
+  /* Section Page Genre Buttons - Smaller on Mobile */
+  .section-genre-button {
+    padding: 6px 14px !important;
+    font-size: 0.8rem !important;
+    height: 36px !important;
+    /* Ensure min touch height */
+    min-height: auto !important;
+    border-width: 1px !important;
+  }
+
+  /* ===========================
+     Actor Page Mobile Polish
+     =========================== */
+
+  .actor-name {
+    font-size: 2.2rem !important;
+  }
+
+  .actor-known-for {
+    font-size: 1rem !important;
+  }
+
+  /* Tweak image size for mobile to not be too overwhelming */
+  .actor-image-container {
+    width: 200px !important;
+    /* Smaller than the default 240px tablet size */
+  }
+
+  .actor-stats-grid {
+    gap: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .actor-hero {
+    padding-top: 80px !important;
+    /* Slightly less padding */
+    gap: 1.5rem !important;
+  }
+
+  .actor-filmography-title {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* =========================================
+   DESKTOP DEFAULTS (Restoring inline values)
+   ========================================= */
+.actor-filmography-title {
+  font-size: 1.8rem;
+  /* Original Desktop Value */
+}
+
+/* =========================================
+   MOVIE PAGE MOBILE LAYOUT FIXES
+   ========================================= */
+
+@media (max-width: 768px) {
+
+  /* FIX: Top Cast Scrolling */
+  .cast-scroll-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 16px;
+    /* Peek effect */
+    max-width: 100vw;
+    width: 100%;
+    display: flex;
+    /* Ensure flex continues to work */
+  }
+
+  /* 3. Hide scroll buttons on mobile for these sections */
+  .movie-bottom-sections .scroll-btn,
+  .recommendations-container .scroll-btn,
+  .home-page-sections .scroll-wrapper>button,
+  .movie-bottom-sections .scroll-wrapper>button {
+    display: none !important;
+  }
+
+  /* Reduce negative margin on mobile to prevent content overlap */
+  .movie-hero-container {
+    margin-bottom: 0 !important;
+    /* Remove overlap on mobile for safety */
+  }
+}
+
+/* =========================================
+   MOVIE PAGE & HERO
+   ========================================= */
+
+/* Desktop Defaults (Restoring Inline) */
+.movie-hero-container {
+  position: relative;
+  min-height: 85vh;
+  /* Original Desktop Value */
+  width: 100%;
+  margin-bottom: -10vh;
+  /* Overlap effect */
+  user-select: none;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.movie-hero-play-button {
+  background-color: white;
+  color: black;
+  border: none;
+  padding: 0.8rem 2rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.movie-hero-play-button:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  transform: scale(1.05);
+}
+
+.movie-hero-trailer-button {
+  background-color: rgba(109, 109, 110, 0.7);
+  color: white;
+  border: none;
+  padding: 0.8rem 2rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background-color 0.2s;
+}
+
+.movie-hero-trailer-button:hover {
+  background-color: rgba(109, 109, 110, 0.5);
+}
+
+.watch-link-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-width: 120px;
+  height: 50px;
+}
+
+.watch-section-title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.why-watch-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin: 0;
+  border-left: 4px solid var(--primary-color);
+  padding-left: 1rem;
+}
+
+.why-watch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  width: auto;
+  /* Removed default margin to prevent inheritance issues */
+}
+
+/* Desktop Only Margins */
+@media (min-width: 769px) {
+
+  .why-watch-grid,
+  .movie-bottom-sections {
+    margin: 0 1rem;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .why-watch-grid,
+  .movie-bottom-sections {
+    width: 100%;
+    margin: 0;
+
+    padding-left: 0;
+    padding-right: 24px;
+    box-sizing: border-box;
+    max-width: 100vw;
+    /* Strict viewport constraint */
+    overflow-x: hidden;
+    /* Prevent horizontal spill */
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .episodes-list {
+    width: calc(100% - 3.5rem);
+    margin-left: 1rem;
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 360px) {
+
+  .episodes-list {
+    width: auto !important;
+    margin-left: -0.5rem !important;
+    margin-right: 2.0rem !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    transform: none !important;
+    box-sizing: border-box !important;
+  }
+}
+
+.sidebar-section-title {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.5rem;
+}
+
+/* Mobile Overrides for Movie Page */
+@media (max-width: 768px) {
+  .movie-hero-container {
+    min-height: 55vh !important;
+    /* Shorter for mobile to show more context and reduce zoom */
+    margin-bottom: -5vh !important;
+    /* Less overlap on mobile */
+  }
+
+  /* Make hero buttons mobile friendly (full width or stack) */
+  .movie-hero-play-button,
+  .movie-hero-trailer-button {
+    flex: 1;
+    /* Stretch buttons */
+    justify-content: center;
+    padding: 0.8rem 0.5rem !important;
+    min-width: auto !important;
+    font-size: 0.95rem !important;
+    white-space: nowrap;
+  }
+
+  .watch-link-button {
+    flex: 0 1 auto;
+    /* Don't force grow */
+    width: auto !important;
+    min-width: 140px !important;
+    /* Good touch target */
+    max-width: 100%;
+    height: 44px !important;
+  }
+
+  .watch-section-title,
+  .why-watch-title {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* Movie Genre Tags */
+.movie-genre-tag {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid #333;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  color: #ccc;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.movie-genre-tag:hover {
+  border-color: white;
+  color: white;
+}
+
+.movie-genre-tag:active {
+  background-color: #e50914;
+  border-color: #e50914;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .movie-genre-tag {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    border-width: 1px;
+  }
+}
+
+/* Skeleton Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%);
+  animation: shimmer 1.5s infinite;
+}

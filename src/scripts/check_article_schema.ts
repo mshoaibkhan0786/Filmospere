@@ -1,0 +1,37 @@
+
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) { process.exit(1); }
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function main() {
+    // Try to select existing columns + potential SEO columns
+    const { data, error } = await supabase
+        .from('articles')
+        .select('*')
+        .limit(1);
+
+    if (error) {
+        console.error("Error fetching articles:", error);
+    } else if (data && data.length > 0) {
+        const keys = Object.keys(data[0]);
+        console.log("Article Columns:", keys.join(', '));
+
+        const hasMeta = keys.includes('meta_title');
+        console.log(`Has meta_title? ${hasMeta}`);
+    } else {
+        console.log("No articles found to check schema.");
+    }
+}
+
+main();

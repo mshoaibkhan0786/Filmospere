@@ -1,0 +1,25 @@
+# Exclude scripts folder (not needed for production)
+src/scripts/
+
+# Backup and data files
+*backup*
+*.sql
+*.db
+
+# Development artifacts
+.git
+.vscode
+.idea
+node_modules
+dist
+public/movies.json
+
+# Lock files (let Vercel generate its own to avoid version conflicts)
+package-lock.json
+npm-lock.yaml
+yarn.lock
+pnpm-lock.yaml
+
+# Vercel
+.vercel
+

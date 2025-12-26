@@ -1,0 +1,368 @@
+[dotenv@17.2.3] injecting env (3) from .env -- tip: ÔÜÖ´©Å  specify custom .env file path with { path: '/custom/path/.env' }
+Starting deep search...
+Scanning rows 0 to 999...
+[MATCH] ID: tmdb-89349
+  Title: Ninja Operation 5 - Godfather The Master
+  Slug:  ninja-operation-5-godfather-the-master-1987
+  Desc:  Raymond is set to inherit his father's criminal em...
+------------------------------------------------
+[MATCH] ID: tmdb-65844
+  Title: KONOSUBA - God's blessing on this wonderful world!
+  Slug:  konosuba-god-s-blessing-on-this-wonderful-world-2016
+  Desc:  Kazuma Sato's life takes an unexpected turn after ...
+------------------------------------------------
+[MATCH] ID: tmdb-399566
+  Title: Godzilla vs. Kong
+  Slug:  godzilla-vs-kong-2021
+  Desc:  In a world overrun by colossal monsters, humanity'...
+------------------------------------------------
+[MATCH] ID: tmdb-238
+  Title: The Godfather
+  Slug:  the-godfather-1972
+  Desc:  Set against the backdrop of post-war America, 'The...
+------------------------------------------------
+[MATCH] ID: tmdb-124905
+  Title: Godzilla
+  Slug:  godzilla-2014
+  Desc:  In 'Godzilla', Ford Brody, a dedicated Navy bomb e...
+------------------------------------------------
+[MATCH] ID: tmdb-77165
+  Title: And God Said to Cain
+  Slug:  and-god-said-to-cain-1970
+  Desc:  After spending ten years unjustly imprisoned, a ma...
+------------------------------------------------
+[MATCH] ID: tmdb-402109
+  Title: Godhi Banna Sadharana Mykattu
+  Slug:  godhi-banna-sadharana-mykattu-2016
+  Desc:  Venkob Rao is a widowed man struggling with Alzhei...
+------------------------------------------------
+[MATCH] ID: tmdb-598
+  Title: City of God
+  Slug:  city-of-god-2002
+  Desc:  Set against the backdrop of Rio de Janeiro's favel...
+------------------------------------------------
+[MATCH] ID: tmdb-240
+  Title: The Godfather Part II
+  Slug:  the-godfather-part-ii-1974
+  Desc:  In 'The Godfather Part II', the intertwining narra...
+------------------------------------------------
+[MATCH] ID: tmdb-755450
+  Title: Godfather
+  Slug:  godfather-2012
+  Desc:  Set against the backdrop of power struggles and fa...
+------------------------------------------------
+Scanning rows 1000 to 1999...
+[MATCH] ID: tmdb-373571
+  Title: Godzilla: King of the Monsters
+  Slug:  godzilla-king-of-the-monsters-2019
+  Desc:  A secret agency called Monarch defends humanity ag...
+------------------------------------------------
+[MATCH] ID: tmdb-39973
+  Title: Slave of the Cannibal God
+  Slug:  slave-of-the-cannibal-god-1978
+  Desc:  Seeking answers, a woman and her brother venture i...
+------------------------------------------------
+Scanning rows 2000 to 2999...
+[MATCH] ID: tmdb-777116
+  Title: Home Office: Un especial de Mirreyes contra God├¡nez
+  Slug:  home-office-un-especial-de-mirreyes-contra-god-nez-2020
+  Desc:  The employees of Kuri Gonz├ílez Shoe Stores initial...
+------------------------------------------------
+[MATCH] ID: tmdb-60117
+  Title: Mother Teresa: In the Name of God's Poor
+  Slug:  mother-teresa-in-the-name-of-god-s-poor-1997
+  Desc:  Amidst the turmoil of 1946 Calcutta, Sister Teresa...
+------------------------------------------------
+[MATCH] ID: tmdb-238111
+  Title: Pope John Paul I: The Smile of God
+  Slug:  pope-john-paul-i-the-smile-of-god-2006
+  Desc:  A profound exploration of the life and teachings o...
+------------------------------------------------
+[MATCH] ID: tmdb-144378
+  Title: Go with God, Gringo
+  Slug:  go-with-god-gringo-1966
+  Desc:  Gringo, seeking vengeance for his slain brother, i...
+------------------------------------------------
+[MATCH] ID: tmdb-929
+  Title: Godzilla
+  Slug:  godzilla-1998
+  Desc:  A colossal monster emerges after French nuclear te...
+------------------------------------------------
+[MATCH] ID: tmdb-823464
+  Title: Godzilla x Kong: The New Empire
+  Slug:  godzilla-x-kong-the-new-empire-2024
+  Desc:  Following their explosive showdown, Godzilla and K...
+------------------------------------------------
+[MATCH] ID: tmdb-594767
+  Title: Shazam! Fury of the Gods
+  Slug:  shazam-fury-of-the-gods-2023
+  Desc:  Billy Batson and his foster siblings are called ba...
+------------------------------------------------
+[MATCH] ID: tmdb-18171
+  Title: All God's Children Can Dance
+  Slug:  all-god-s-children-can-dance-2008
+  Desc:  Kengo, a young man in Koreatown, Los Angeles, stru...
+------------------------------------------------
+[MATCH] ID: tmdb-90020
+  Title: The Long Arm of the Godfather
+  Slug:  the-long-arm-of-the-godfather-1972
+  Desc:  A cunning low-level mafioso decides to double-cros...
+------------------------------------------------
+Scanning rows 3000 to 3999...
+[MATCH] ID: tmdb-148085
+  Title: Hate Is My God
+  Slug:  hate-is-my-god-1969
+  Desc:  Returning to his hometown after a tragedy, a young...
+------------------------------------------------
+[MATCH] ID: tmdb-50507
+  Title: The Gods Must Be Crazy: Crazy Safari
+  Slug:  the-gods-must-be-crazy-crazy-safari-1991
+  Desc:  Two men find themselves on an unexpected adventure...
+------------------------------------------------
+[MATCH] ID: tmdb-868710
+  Title: Those who will see God
+  Slug:  those-who-will-see-god-1963
+  Desc:  Facing dire financial struggles, a young couple gr...
+------------------------------------------------
+[MATCH] ID: tmdb-134474
+  Title: Godfather
+  Slug:  godfather-1991
+  Desc:  A passionate love story unfolds amid the fierce ri...
+------------------------------------------------
+[MATCH] ID: tmdb-441182
+  Title: Godha
+  Slug:  godha-2017
+  Desc:  A group of wrestling enthusiasts in a Kerala villa...
+------------------------------------------------
+[MATCH] ID: tmdb-259738
+  Title: God Forbid a Worse Thing Should Happen
+  Slug:  god-forbid-a-worse-thing-should-happen-2002
+  Desc:  Set in the nostalgic 1960s, a young boy named Frul...
+------------------------------------------------
+[MATCH] ID: tmdb-728315
+  Title: Making of Godzilla vs. Mothra
+  Slug:  making-of-godzilla-vs-mothra-2010
+  Desc:  Exploring the intricate process behind the creatio...
+------------------------------------------------
+[MATCH] ID: tmdb-294418
+  Title: If I Could Be God Just Once
+  Slug:  if-i-could-be-god-just-once-1954
+  Desc:  A bumbling everyman stumbles upon a quirky opportu...
+------------------------------------------------
+[MATCH] ID: tmdb-26153
+  Title: God Tussi Great Ho
+  Slug:  god-tussi-great-ho-2008
+  Desc:  Frustrated by a rival's deceit that cost him his j...
+------------------------------------------------
+[MATCH] ID: tmdb-135718
+  Title: OMG: Oh My God!
+  Slug:  omg-oh-my-god-2012
+  Desc:  A shopkeeper's life turns upside down when a devas...
+------------------------------------------------
+[MATCH] ID: tmdb-286816
+  Title: The Rockford Files: Shoot-Out at the Golden Pagoda
+  Slug:  the-rockford-files-shoot-out-at-the-golden-pagoda-1997
+  Desc:  After a peaceful fishing trip, private investigato...
+------------------------------------------------
+[MATCH] ID: tmdb-783723
+  Title: Thank God
+  Slug:  thank-god-2022
+  Desc:  An arrogant real estate broker drowning in debt fa...
+------------------------------------------------
+Scanning rows 4000 to 4999...
+[MATCH] ID: tmdb-66365
+  Title: Apoorva Sagodharargal
+  Slug:  apoorva-sagodharargal-1989
+  Desc:  An honest police officer faces grave consequences ...
+------------------------------------------------
+[MATCH] ID: tmdb-1155281
+  Title: Creation of the Gods II: Demon Force
+  Slug:  creation-of-the-gods-ii-demon-force-2025
+  Desc:  Amidst the chaos of the Shang Dynasty, Taishi Wen ...
+------------------------------------------------
+[MATCH] ID: tmdb-8393
+  Title: The Gods Must Be Crazy
+  Slug:  the-gods-must-be-crazy-1980
+  Desc:  When a Coca-Cola bottle accidentally falls from an...
+------------------------------------------------
+Scanning rows 5000 to 5999...
+[MATCH] ID: tmdb-722778
+  Title: The Hand of God
+  Slug:  the-hand-of-god-2021
+  Desc:  Set in Naples during the 1980s, a young boy grappl...
+------------------------------------------------
+[MATCH] ID: tmdb-147441
+  Title: Exodus: Gods and Kings
+  Slug:  exodus-gods-and-kings-2014
+  Desc:  Moses, an unwavering leader, confronts the powerfu...
+------------------------------------------------
+[MATCH] ID: tmdb-205584
+  Title: Gods of Egypt
+  Slug:  gods-of-egypt-2016
+  Desc:  A thief teams up with the god Horus to save Egypt ...
+------------------------------------------------
+[MATCH] ID: tmdb-104846
+  Title: The Fear of God: 25 Years of The Exorcist
+  Slug:  the-fear-of-god-25-years-of-the-exorcist-1998
+  Desc:  A deep dive into the making of the iconic horror f...
+------------------------------------------------
+[MATCH] ID: tmdb-121030
+  Title: Love and Death in the Garden of the Gods
+  Slug:  love-and-death-in-the-garden-of-the-gods-1972
+  Desc:  A renowned professor discovers a haunting tape in ...
+------------------------------------------------
+Scanning rows 6000 to 6999...
+[MATCH] ID: tmdb-940721
+  Title: Godzilla Minus One
+  Slug:  godzilla-minus-one-2023
+  Desc:  Postwar Japan faces an unprecedented nightmare as ...
+------------------------------------------------
+[MATCH] ID: tmdb-64508
+  Title: Hard to Be a God
+  Slug:  hard-to-be-a-god-1990
+  Desc:  In a distant world resembling medieval Earth, an u...
+------------------------------------------------
+[MATCH] ID: tmdb-11937
+  Title: The Gods Must Be Crazy II
+  Slug:  the-gods-must-be-crazy-ii-1989
+  Desc:  Xixo embarks on a daring adventure to rescue his c...
+------------------------------------------------
+[MATCH] ID: tmdb-863931
+  Title: GodFather
+  Slug:  godfather-2022
+  Desc:  After the unexpected death of PKR, a celebrated po...
+------------------------------------------------
+[MATCH] ID: tmdb-71446
+  Title: Money Heist
+  Slug:  money-heist
+  Desc:  A mastermind known only as The Professor assembles...
+------------------------------------------------
+[MATCH] ID: tmdb-105315
+  Title: City of God
+  Slug:  city-of-god-2011
+  Desc:  A young construction worker named Swarnavel finds ...
+------------------------------------------------
+[MATCH] ID: tmdb-170522
+  Title: Asterix: The Mansions of the Gods
+  Slug:  asterix-the-mansions-of-the-gods-2014
+  Desc:  Caesar devises a cunning plan to conquer a Gaulish...
+------------------------------------------------
+[MATCH] ID: tmdb-81051
+  Title: Godavari
+  Slug:  godavari-2006
+  Desc:  Sreram, an idealistic young man, is trying to heal...
+------------------------------------------------
+Scanning rows 7000 to 7999...
+[MATCH] ID: tmdb-793285
+  Title: God's Not Dead: We The People
+  Slug:  god-s-not-dead-we-the-people-2021
+  Desc:  A fierce legal battle unfolds as Reverend Dave mus...
+------------------------------------------------
+[MATCH] ID: tmdb-127681
+  Title: God Made Them... I Kill Them
+  Slug:  god-made-them-i-kill-them-1968
+  Desc:  A determined bounty hunter arrives in a small Mexi...
+------------------------------------------------
+[MATCH] ID: tmdb-856289
+  Title: Creation of the Gods I: Kingdom of Storms
+  Slug:  creation-of-the-gods-i-kingdom-of-storms-2023
+  Desc:  Immerse yourself in the epic struggles of a time l...
+------------------------------------------------
+[MATCH] ID: tmdb-1002695
+  Title: Mirreyes contra God├¡nez 2: El retiro
+  Slug:  mirreyes-contra-god-nez-2-el-retiro-2022
+  Desc:  A group of mismatched colleagues embarks on a corp...
+------------------------------------------------
+[MATCH] ID: tmdb-419508
+  Title: Christman in London - God Save the Queen
+  Slug:  christman-in-london-god-save-the-queen-2016
+  Desc:  Two brothers hatch a daring plan to kidnap the Que...
+------------------------------------------------
+[MATCH] ID: tmdb-1024592
+  Title: God's Not Dead: In God We Trust
+  Slug:  god-s-not-dead-in-god-we-trust-2024
+  Desc:  Reverend David Hill faces a defining moment as he ...
+------------------------------------------------
+[MATCH] ID: tmdb-112739
+  Title: In God We Tru$t
+  Slug:  in-god-we-tru-t-1980
+  Desc:  Brother Ambrose, a well-meaning monk, embarks on a...
+------------------------------------------------
+[MATCH] ID: tmdb-712454
+  Title: The Summit of the Gods
+  Slug:  the-summit-of-the-gods-2021
+  Desc:  Driven by an unwavering passion, a photojournalist...
+------------------------------------------------
+[MATCH] ID: tmdb-148117
+  Title: Death Is Sweet From the Soldier Of God
+  Slug:  death-is-sweet-from-the-soldier-of-god-1972
+  Desc:  Accused of a robbery he didn't commit, a man teams...
+------------------------------------------------
+[MATCH] ID: tmdb-42212
+  Title: Thank God It's Friday
+  Slug:  thank-god-it-s-friday-1978
+  Desc:  A vibrant night ignites as party-goers flock to th...
+------------------------------------------------
+[MATCH] ID: tmdb-347126
+  Title: God's Not Dead 2
+  Slug:  god-s-not-dead-2-2016
+  Desc:  A high school teacher faces serious backlash after...
+------------------------------------------------
+Scanning rows 8000 to 8999...
+[MATCH] ID: tmdb-218520
+  Title: Kali-Yug, Goddess of Vengeance
+  Slug:  kali-yug-goddess-of-vengeance-1963
+  Desc:  In 19th century India, during British colonial rul...
+------------------------------------------------
+[MATCH] ID: tmdb-242
+  Title: The Godfather Part III
+  Slug:  the-godfather-part-iii-1990
+  Desc:  Michael Corleone, now an aging mob boss, struggles...
+------------------------------------------------
+[MATCH] ID: tmdb-358893
+  Title: Angry Indian Goddesses
+  Slug:  angry-indian-goddesses-2015
+  Desc:  A joyful gathering unfolds as a photographer organ...
+------------------------------------------------
+Scanning rows 9000 to 9999...
+[MATCH] ID: tmdb-689249
+  Title: Money Heist: The Phenomenon
+  Slug:  money-heist-the-phenomenon-2020
+  Desc:  Delving into the global phenomenon of 'Money Heist...
+------------------------------------------------
+[MATCH] ID: tmdb-125386
+  Title: The Gods Must Be Funny in China
+  Slug:  the-gods-must-be-funny-in-china-1994
+  Desc:  N!xau, a simple Bushman, finds himself in the bust...
+------------------------------------------------
+[MATCH] ID: tmdb-1185369
+  Title: God & Country: The Rise of Christian Nationalism
+  Slug:  god-country-the-rise-of-christian-nationalism-2024
+  Desc:  Christian Nationalism raises critical questions ab...
+------------------------------------------------
+[MATCH] ID: tmdb-56356
+  Title: Between God, The Devil and a Winchester
+  Slug:  between-god-the-devil-and-a-winchester-1968
+  Desc:  A treasure map appears, leading a determined man t...
+------------------------------------------------
+[MATCH] ID: tmdb-145004
+  Title: Gunman Sent by God
+  Slug:  gunman-sent-by-god-1968
+  Desc:  A young circus gunman is drawn into violence when ...
+------------------------------------------------
+[MATCH] ID: tmdb-880313
+  Title: The Wrath of God
+  Slug:  the-wrath-of-god-2022
+  Desc:  Haunted by the tragic deaths of her loved ones, Lu...
+------------------------------------------------
+[MATCH] ID: tmdb-24043
+  Title: God's Army 2: States of Grace
+  Slug:  god-s-army-2-states-of-grace-2005
+  Desc:  A drive-by shooting deeply impacts five individual...
+------------------------------------------------
+[MATCH] ID: tmdb-1487604
+  Title: God's Shirt
+  Slug:  god-s-shirt
+  Desc:  Three friends, facing a midlife crisis, embark on ...
+------------------------------------------------
+Scanning rows 10000 to 10999...

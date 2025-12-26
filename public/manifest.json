@@ -1,0 +1,21 @@
+{
+    "name": "Filmospere",
+    "short_name": "Filmospere",
+    "description": "Your ultimate destination for movies, series, and trending content.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#141414",
+    "theme_color": "#e50914",
+    "icons": [
+        {
+            "src": "/favicon.png?v=13",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/favicon.png?v=13",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

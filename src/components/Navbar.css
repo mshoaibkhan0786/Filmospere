@@ -1,0 +1,132 @@
+/* Navbar.css */
+
+.navbar {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 1rem 0;
+    transition: background-color 0.3s;
+}
+
+.navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Mobile Menu Trigger 
+   Note: hidden by default, shown via media query in index.css (!important) 
+*/
+.mobile-menu-trigger-btn {
+    display: none;
+    cursor: pointer;
+    padding: 8px;
+    margin-left: -8px;
+    color: white;
+}
+
+.back-arrow-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    cursor: pointer;
+    z-index: 101;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.back-arrow-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.navbar-logo-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.navbar-site-name {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #e50914;
+}
+
+.navbar-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+    margin-right: 2rem;
+}
+
+.nav-link {
+    color: #ccc;
+    font-weight: normal;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: white;
+}
+
+.nav-link.active {
+    color: white;
+    font-weight: bold;
+}
+
+.search-trigger {
+    padding: 10px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    /* Accessible outline should be managed globally, but keeping inline parity */
+    padding: 12px 10px 12px 0;
+    transition: opacity 0.2s ease;
+
+    /* Default Hidden State Logic moved to classes */
+    opacity: 0;
+    pointer-events: none;
+}
+
+.search-input.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.search-close-btn {
+    padding: 10px;
+    color: #888;
+    cursor: pointer;
+}
