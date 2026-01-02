@@ -12,7 +12,7 @@ src/scripts/
 .idea
 node_modules
 dist
-public/movies.json
+
 
 # Lock files (let Vercel generate its own to avoid version conflicts)
 package-lock.json

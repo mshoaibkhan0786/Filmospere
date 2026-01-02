@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { X, ChevronRight, Home, Tv, Film, TrendingUp, FileText } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import Logo from './Logo';
 
 interface MobileMenuProps {
@@ -127,9 +127,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                             const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.includes(item.path));
 
                             return (
-                                <div
+                                <Link
                                     key={item.label}
-                                    onClick={() => navigate(item.path)}
+                                    to={item.path}
+                                    onClick={onClose}
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
@@ -139,13 +140,14 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                                         backgroundColor: isActive ? 'rgba(229, 9, 20, 0.1)' : 'transparent',
                                         color: isActive ? '#e50914' : 'white',
                                         cursor: 'pointer',
-                                        transition: 'all 0.2s ease'
+                                        transition: 'all 0.2s ease',
+                                        textDecoration: 'none' // Essential for Link to look like div
                                     }}
                                 >
                                     <Icon size={20} color={isActive ? '#e50914' : '#888'} />
                                     <span style={{ fontSize: '1.1rem', fontWeight: isActive ? '600' : '500' }}>{item.label}</span>
                                     {isActive && <div style={{ marginLeft: 'auto', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#e50914' }} />}
-                                </div>
+                                </Link>
                             );
                         })}
                     </div>
@@ -168,9 +170,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                             gap: '0.8rem'
                         }}>
                             {genres.map(genre => (
-                                <div
+                                <Link
                                     key={genre}
-                                    onClick={() => navigate(`/section/${genre}`)}
+                                    to={`/section/${genre}`}
+                                    onClick={onClose}
                                     style={{
                                         padding: '0.8rem 1rem',
                                         backgroundColor: 'rgba(255,255,255,0.03)',
@@ -179,11 +182,13 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                                         fontSize: '0.95rem',
                                         cursor: 'pointer',
                                         border: '1px solid rgba(255,255,255,0.05)',
-                                        textAlign: 'center'
+                                        textAlign: 'center',
+                                        textDecoration: 'none',
+                                        display: 'block' // Ensure it fills the grid cell like a div
                                     }}
                                 >
                                     {genre}
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </div>

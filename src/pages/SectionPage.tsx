@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft } from 'lucide-react';
@@ -61,7 +61,20 @@ const SectionPage: React.FC = () => {
     const { movies, fetchMoviesByTag, searchMovies } = useMovies(); // Added searchMovies
     const { title } = useParams<{ title: string }>();
     const navigate = useNavigate();
-    const decodedTitle = decodeURIComponent(title || '');
+
+    // Normalize Title for Case-Insensitive Matching
+    // Fixes issue where /section/crime (lowercase) fails vs /section/Crime (Title Case)
+    // DO NOT REMOVE THIS NORMALIZATION BLOCK
+    const rawTitle = decodeURIComponent(title || '');
+    const normalizedTitle = useMemo(() => {
+        if (!rawTitle) return '';
+        // Find matching key in SECTION_DESCRIPTIONS (case-insensitive)
+        const match = Object.keys(SECTION_DESCRIPTIONS).find(k => k.toLowerCase() === rawTitle.toLowerCase());
+        // Return canonical key if found, otherwise raw title (e.g. for search strings or unknown tags)
+        return match || rawTitle;
+    }, [rawTitle]);
+
+    const decodedTitle = normalizedTitle; // Use normalized title everywhere downstream
 
     // States
     const [searchQuery, setSearchQuery] = useState('');
@@ -167,7 +180,7 @@ const SectionPage: React.FC = () => {
     }, [debouncedSearch, searchMovies, decodedTitle, fetchMoviesByTag]); // Re-run when search term changes
 
     // Infinite Scroll Logic
-    const handleLoadMore = async () => {
+    const handleLoadMore = useCallback(async () => {
         if (isLoadingMore || !hasMore) return;
         setIsLoadingMore(true);
 
@@ -186,12 +199,6 @@ const SectionPage: React.FC = () => {
                 }
             } else {
                 // Load more section movies
-                // Filter genres locally implies we are fetching generic tag movies.
-                // If selectedGenres is active, infinite scroll is tricky because backend pagination is oblivious to local filters.
-                // Strategy: Fetch MORE generic movies and let client filter, OR switch to filtered fetch.
-                // Current `fetchMoviesByTag` only handles ONE tag (the section title).
-                // If mulitple genres selected, we might have issues.
-                // For now, assume we fetch by Section Title.
                 newBatch = await fetchMoviesByTag(decodedTitle, currentLength, BATCH_SIZE);
                 if (newBatch.length < BATCH_SIZE) {
                     setHasMore(false);
@@ -215,7 +222,7 @@ const SectionPage: React.FC = () => {
         } finally {
             setIsLoadingMore(false);
         }
-    };
+    }, [isLoadingMore, hasMore, sectionMovies.length, isSearchMode, debouncedSearch, totalCount, decodedTitle, fetchMoviesByTag, searchMovies]);
 
     // Intersection Observer
     useEffect(() => {
@@ -225,7 +232,7 @@ const SectionPage: React.FC = () => {
                     handleLoadMore();
                 }
             },
-            { threshold: 0.1, rootMargin: '400px' } // Aggressive pre-load
+            { threshold: 0.1, rootMargin: '800px' } // Increased Lookahead (Seamless Scroll)
         );
 
         if (observerTarget.current) {
@@ -261,16 +268,14 @@ const SectionPage: React.FC = () => {
         // Remove duplicates again just to be safe
         data = Array.from(new Map(data.map(m => [m.id, m])).values());
 
-        // Sort: Latest first
-        if (decodedTitle !== 'Trending' && !isSearchMode) { // Keep search relevance sorted if searching
-            data.sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0));
-        }
+        // REMOVED SORTING HERE to prevent layout shifts during infinite scroll.
+        // We trust the source (API/Backup) to provide them in roughly the correct order (batch by batch).
+        // If we strictly sort here, a new 2025 movie loaded in batch #2 would jump to the top, causing flicker.
 
         return data.filter(m => isValidContent(m));
     }, [sectionMovies, selectedGenres, decodedTitle, isSearchMode]);
 
-    const normalizedTitle = decodedTitle.toLowerCase();
-    const matchedKey = Object.keys(SECTION_DESCRIPTIONS).find(k => k.toLowerCase() === normalizedTitle);
+    const matchedKey = Object.keys(SECTION_DESCRIPTIONS).find(k => k.toLowerCase() === decodedTitle.toLowerCase());
     const description = SECTION_DESCRIPTIONS[decodedTitle] || (matchedKey ? SECTION_DESCRIPTIONS[matchedKey] : '') || (isSearchMode ? `Search results for "${debouncedSearch}"` : '');
 
     const toggleGenre = (genre: string) => {

@@ -23,6 +23,78 @@ interface MovieContextType {
 
 const MovieContext = createContext<MovieContextType | undefined>(undefined);
 
+// Helper for Static Fallback
+let localMoviesCache: Movie[] | null = null;
+const fetchLocalMovies = async (): Promise<Movie[]> => {
+    if (localMoviesCache) return localMoviesCache;
+
+    console.log('[Backup] Attempting to load movies from local backup...');
+    let allMovies: Movie[] = [];
+    let partIndex = 1;
+
+    try {
+        while (true) {
+            const fileName = `movies_part${partIndex}.json`;
+            const response = await fetch(`/${fileName}`);
+
+            if (!response.ok) {
+                // If the first part is missing, assume no backup exists
+                if (partIndex === 1) {
+                    console.error('[Backup] Failed to load local movies: movies_part1.json not found.');
+                    return [];
+                }
+                // Otherwise, we've loaded all available parts
+                break;
+            }
+
+            // CHECK: Prevent parsing index.html (SPA fallback) as JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('text/html')) {
+                // We likely hit the SPA fallback for a missing file
+                if (partIndex === 1) {
+                    console.error('[Backup] Failed to load local movies: Server returned HTML instead of JSON.');
+                    return [];
+                }
+                break;
+            }
+
+            let data;
+            try {
+                data = await response.json();
+            } catch (jsonErr) {
+                console.error(`[Backup] Failed to parse JSON for ${fileName}`, jsonErr);
+                break;
+            }
+            // Ensure data matches Movie interface
+            const chunkMovies = data.map((m: any) => ({
+                ...m,
+                // Ensure critical fields exist
+                cast: m.cast || [],
+                tags: m.tags || [],
+                rating: m.rating || 0,
+                voteCount: m.voteCount || 0
+            })) as Movie[];
+
+            allMovies = allMovies.concat(chunkMovies);
+            console.log(`[Backup] Loaded ${fileName}, total movies so far: ${allMovies.length}`);
+            partIndex++;
+        }
+
+        if (allMovies.length === 0) {
+            console.error('[Backup] No movie data found in any backup parts.');
+            return [];
+        }
+
+        localMoviesCache = allMovies;
+        console.log(`[Backup] Successfully loaded ${localMoviesCache.length} movies from local backup parts.`);
+        return localMoviesCache;
+
+    } catch (e) {
+        console.error('[Backup] Failed to load local backup:', e);
+        return [];
+    }
+};
+
 export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [movies, setMovies] = useState<Movie[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +112,10 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Track last loaded config to prevent double-fetch in StrictMode
     const lastLoadedConfig = React.useRef<string>('');
     const slugMapRef = React.useRef<Record<string, string>>({}); // Slug -> ID Map
+
+    // CRITICAL FEATURE: QUERY CACHING (5 Min TTL) - DO NOT REMOVE
+    // Used to prevent DB spam when users navigate back/forth between sections
+    const sectionCache = React.useRef<Map<string, { data: Movie[], timestamp: number }>>(new Map());
 
     // Race Condition Fix: Coordinate Slug Map Loading (Lazy Init to prevent overwrites)
     const resolveSlugMap = React.useRef<() => void>(() => { });
@@ -137,8 +213,8 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
                                 return supabase
                                     .from('movies')
-                                    .select('*')
-                                    .ilike('data->>tags', `%${searchTag}%`)
+                                    .select('id, data->title, data->posterUrl, data->rating, data->releaseYear, data->slug, data->contentType, data->voteCount, data->tags, data->duration, data->description, data->backdropUrl')
+                                    .contains('data', { tags: [searchTag] })
                                     .limit(12);
                             });
 
@@ -150,9 +226,9 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                                     res.data.forEach((row: any) => {
                                         if (!cachedSeenIds.has(row.id)) {
                                             lazyMovies.push({
-                                                ...row.data,
+                                                ...row,
                                                 id: row.id
-                                            } as Movie);
+                                            } as unknown as Movie);
                                             cachedSeenIds.add(row.id);
                                         }
                                     });
@@ -178,7 +254,7 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 // A. Base Popular (Top 50)
                 // A. Base Popular (Top 50)
                 const p1 = supabase.from('movies')
-                    .select('*')
+                    .select('id, data->title, data->posterUrl, data->rating, data->releaseYear, data->slug, data->contentType, data->voteCount, data->tags, data->duration, data->description, data->backdropUrl')
                     .not('data->>posterUrl', 'is', null)
                     .neq('data->>posterUrl', 'N/A')
                     .neq('data->>posterUrl', '')
@@ -188,7 +264,7 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 // B. Latest (Top 50)
                 // B. Latest (Top 50)
                 const p2 = supabase.from('movies')
-                    .select('*')
+                    .select('id, data->title, data->posterUrl, data->rating, data->releaseYear, data->slug, data->contentType, data->voteCount, data->tags, data->duration, data->description, data->backdropUrl')
                     .not('data->>posterUrl', 'is', null)
                     .neq('data->>posterUrl', 'N/A')
                     .neq('data->>posterUrl', '')
@@ -198,7 +274,7 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 // C. Series (Top 50)
                 // C. Series (Top 50)
                 const p3 = supabase.from('movies')
-                    .select('*')
+                    .select('id, data->title, data->posterUrl, data->rating, data->releaseYear, data->slug, data->contentType, data->voteCount, data->tags, data->duration, data->description, data->backdropUrl')
                     .eq('data->>contentType', 'series')
                     .not('data->>posterUrl', 'is', null)
                     .neq('data->>posterUrl', 'N/A')
@@ -207,6 +283,10 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
                 // 3. Execute Core Fetch First (Parallel)
                 const [r1, r2, r3] = await Promise.all([p1, p2, p3]);
+
+                if (r1.error || r2.error || r3.error) {
+                    throw new Error('Supabase fetch failed'); // Force fallback
+                }
 
                 // 4. Gather Core Results
                 const newMovies: Movie[] = [];
@@ -219,9 +299,9 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                             seenIds.add(row.id);
                             // Standard full movie object from data column
                             newMovies.push({
-                                ...row.data,
+                                ...row,
                                 id: row.id
-                            } as Movie);
+                            } as unknown as Movie);
                         }
                     });
                 };
@@ -236,49 +316,59 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
                 // 6. Background Fetch: Get the Genre Sections (Lazy Load)
                 setTimeout(async () => {
-                    const genrePromises = tagsToFetch.map(tag => {
-                        let searchTag = tag;
-                        if (tag === 'Science Fiction') searchTag = 'Sci-Fi';
-                        if (tag === 'Sci-Fi') searchTag = 'Science Fiction';
+                    try {
+                        const genrePromises = tagsToFetch.map(tag => {
+                            let searchTag = tag;
+                            if (tag === 'Science Fiction') searchTag = 'Sci-Fi';
+                            if (tag === 'Sci-Fi') searchTag = 'Science Fiction';
 
-                        return supabase
-                            .from('movies')
-                            .select('*')
-                            .ilike('data->>tags', `%${searchTag}%`)
-                            .limit(12);
-                    });
+                            return supabase
+                                .from('movies')
+                                .select('id, data->title, data->posterUrl, data->rating, data->releaseYear, data->slug, data->contentType, data->voteCount, data->tags, data->duration, data->description, data->backdropUrl')
+                                .ilike('data->>tags', `%${searchTag}%`)
+                                .limit(12);
+                        });
 
-                    const genreResults = await Promise.all(genrePromises);
-                    const lazyMovies: Movie[] = [];
+                        const genreResults = await Promise.all(genrePromises);
+                        const lazyMovies: Movie[] = [];
 
-                    genreResults.forEach(res => {
-                        if (res.data) {
-                            res.data.forEach((row: any) => {
-                                if (!seenIds.has(row.id)) {
-                                    lazyMovies.push({
-                                        ...row.data,
-                                        id: row.id
-                                    } as Movie);
-                                    seenIds.add(row.id);
-                                }
+                        genreResults.forEach(res => {
+                            if (res.data) {
+                                res.data.forEach((row: any) => {
+                                    if (!seenIds.has(row.id)) {
+                                        lazyMovies.push({
+                                            ...row,
+                                            id: row.id
+                                        } as unknown as Movie);
+                                        seenIds.add(row.id);
+                                    }
+                                });
+                            }
+                        });
+
+                        // Update State with Genre Movies (Deduplicated)
+                        if (lazyMovies.length > 0) {
+                            setMovies(prev => {
+                                const existingIds = new Set(prev.map(m => m.id));
+                                const uniqueNew = lazyMovies.filter(m => !existingIds.has(m.id));
+                                return [...prev, ...uniqueNew];
                             });
                         }
-                    });
-
-                    // Update State with Genre Movies (Deduplicated)
-                    if (lazyMovies.length > 0) {
-                        setMovies(prev => {
-                            const existingIds = new Set(prev.map(m => m.id));
-                            const uniqueNew = lazyMovies.filter(m => !existingIds.has(m.id));
-                            return [...prev, ...uniqueNew];
-                        });
+                    } catch (ignored) {
+                        // Silent fail for background fetch, fallback data is already enough
                     }
                     // Background load finished - NOW we unblock UI to show the final shuffled state
                     setIsLoading(false);
                 }, 100);
 
             } catch (err) {
-                console.error('[MovieContext] Failed initial load:', err);
+                console.warn('[MovieContext] Supabase failed, switching to STATIC FALLBACK:', err);
+                const localData = await fetchLocalMovies();
+                if (localData.length > 0) {
+                    // Random shuffle or slice for home page variety
+                    const shuffled = [...localData].sort(() => 0.5 - Math.random()).slice(0, 100);
+                    setMovies(shuffled);
+                }
                 setIsLoading(false);
             }
         };
@@ -361,7 +451,7 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
             if (error || !data) {
                 console.warn('[MovieContext] Fetch failed for:', identifier, error);
-                return undefined;
+                throw new Error('Not found in DB'); // Trigger fallback
             }
 
             const movie = { ...data.data, id: data.id } as Movie;
@@ -373,8 +463,19 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             });
             return movie;
         } catch (err) {
-            console.error('Error fetching movie:', err);
-            return undefined;
+            console.warn('[MovieContext] Falling back to local for:', identifier);
+            // Fallback Logic
+            const localData = await fetchLocalMovies();
+            const found = localData.find(m => m.id === identifier || m.slug === identifier);
+
+            // Normalized Fallback
+            if (!found && identifier.includes(' ')) {
+                const normalized = identifier.toLowerCase().replace(/ /g, '-');
+                const foundNorm = localData.find(m => m.slug === normalized || m.id === normalized);
+                if (foundNorm) return foundNorm;
+            }
+
+            return found;
         }
     }, [movies]);
 
@@ -461,17 +562,29 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             });
 
             // Pagination Slice
-            // Since we fetched fresh batches, we need to handle pagination manually on the merged list
-            // NOTE: This "Fetch All & Slice" approach works for search because result sets are usually small (<200 relevant items).
-            // It replaces database-level pagination for search.
             const pagedResults = merged.slice(offset, offset + limit);
 
             return { results: pagedResults, count: merged.length };
 
         } catch (err) {
-            console.warn('Smart Search failed, using simple fallback:', err);
-            // Fallback...
-            return { results: [], count: 0 };
+            console.warn('Smart Search failed, using Fallback:', err);
+            // FALLBACK SEARCH
+            const localData = await fetchLocalMovies();
+            const q = query.toLowerCase();
+
+            const matches = localData.filter(m => {
+                return m.title.toLowerCase().includes(q) ||
+                    m.tags?.some(t => t.toLowerCase().includes(q)) ||
+                    m.director?.toLowerCase().includes(q);
+            });
+
+            // Sort by popularity
+            matches.sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0));
+
+            return {
+                results: matches.slice(offset, offset + limit),
+                count: matches.length
+            };
         }
     }, []);
 
@@ -566,140 +679,16 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     };
 
-    // Fetch specific movies by tag (Lazy Load for sections)
     const fetchMoviesByTag = useCallback(async (tag: string, start = 0, count = 20): Promise<Movie[]> => {
         try {
-            // Fetching movies by tag
-
             const normalizedTag = tag.toLowerCase();
 
-            // Alias Mapping
-            let searchTag = tag;
-            if (normalizedTag === 'sci-fi') searchTag = 'Science Fiction';
-            if (normalizedTag === 'anime') searchTag = 'Animation';
-
-            // Explicit Handler for "Discover" Section (Show All)
-            if (normalizedTag === 'discover') {
-                const { data, error } = await supabase
-                    .from('movies')
-                    .select('*')
-                    .not('data->>posterUrl', 'is', null)
-                    .neq('data->>posterUrl', '')
-                    .neq('data->>posterUrl', 'N/A')
-                    // Filter invalid durations to match client-side isValidContent
-                    .not('data->>duration', 'is', null)
-                    .neq('data->>duration', 'N/A')
-                    .neq('data->>duration', '')
-                    .order('data->releaseYear', { ascending: false })
-                    .range(start, start + count - 1);
-
-                if (error) throw error;
-
-                if (data) {
-                    const newMovies = data.map(row => ({ ...row.data, id: row.id } as Movie));
-                    setMovies(prev => {
-                        const currentMap = new Map(prev.map(m => [m.id, m]));
-                        let changed = false;
-                        newMovies.forEach(m => {
-                            if (!currentMap.has(m.id)) {
-                                currentMap.set(m.id, m);
-                                changed = true;
-                            }
-                        });
-                        return changed ? Array.from(currentMap.values()) : prev;
-                    });
-                    return newMovies;
-                }
-                return [];
+            // ⚡ CACHE CHECK (5 Minute TTL)
+            const cacheKey = `${normalizedTag}-${start}`;
+            const cached = sectionCache.current.get(cacheKey);
+            if (cached && (Date.now() - cached.timestamp < 300000)) {
+                return cached.data;
             }
-
-            if (normalizedTag === 'trending') {
-                // For Trending, we might want a different logic or just fetch by views
-                // reusing popularQuery logic but paginated
-                const { data, error } = await supabase
-                    .from('movies')
-                    .select('*')
-                    .order('data->voteCount', { ascending: false })
-                    .range(start, start + count - 1);
-
-                if (error) throw error;
-
-                if (data) {
-                    const newMovies = data.map(row => ({ ...row.data, id: row.id } as Movie));
-                    setMovies(prev => {
-                        const currentMap = new Map(prev.map(m => [m.id, m]));
-                        let changed = false;
-                        newMovies.forEach(m => {
-                            if (!currentMap.has(m.id)) {
-                                currentMap.set(m.id, m);
-                                changed = true;
-                            }
-                        });
-                        return changed ? Array.from(currentMap.values()) : prev;
-                    });
-                    return newMovies;
-                }
-                return [];
-            }
-
-            // Note: Use exact string for "Latest Movies & Series" as it is a specific UI label, 
-            // but forgiving check is better.
-            if (normalizedTag === 'latest movies & series' || normalizedTag === 'latest') {
-                // Paginated latest
-                const { data, error } = await supabase
-                    .from('movies')
-                    .select('*')
-                    .order('data->releaseYear', { ascending: false })
-                    .range(start, start + count - 1);
-
-                if (error) throw error;
-
-                if (data) {
-                    const newMovies = data.map(row => ({ ...row.data, id: row.id } as Movie));
-                    setMovies(prev => {
-                        const currentMap = new Map(prev.map(m => [m.id, m]));
-                        let changed = false;
-                        newMovies.forEach(m => {
-                            if (!currentMap.has(m.id)) {
-                                currentMap.set(m.id, m);
-                                changed = true;
-                            }
-                        });
-                        return changed ? Array.from(currentMap.values()) : prev;
-                    });
-                    return newMovies;
-                }
-                return [];
-            }
-
-            if (normalizedTag === 'web series' || normalizedTag === 'series') {
-                const { data, error } = await supabase
-                    .from('movies')
-                    .select('*')
-                    .eq('data->>contentType', 'series')
-                    .order('data->releaseYear', { ascending: false })
-                    .range(start, start + count - 1);
-
-                if (error) throw error;
-
-                if (data) {
-                    const newMovies = data.map(row => ({ ...row.data, id: row.id } as Movie));
-                    setMovies(prev => {
-                        const currentMap = new Map(prev.map(m => [m.id, m]));
-                        let changed = false;
-                        newMovies.forEach(m => {
-                            if (!currentMap.has(m.id)) {
-                                currentMap.set(m.id, m);
-                                changed = true;
-                            }
-                        });
-                        return changed ? Array.from(currentMap.values()) : prev;
-                    });
-                    return newMovies;
-                }
-                return [];
-            }
-
 
             // Industry / Language Mapping
             const industryMap: Record<string, string> = {
@@ -722,44 +711,55 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
             let query = supabase
                 .from('movies')
-                .select('*')
+                .select('id, data->title, data->posterUrl, data->rating, data->releaseYear, data->slug, data->contentType, data->voteCount, data->tags, data->duration, data->description, data->backdropUrl')
                 .not('data->>posterUrl', 'is', null)
                 .neq('data->>posterUrl', '')
                 .neq('data->>posterUrl', 'N/A');
 
             if (tag === 'South Indian') {
                 query = query.or('data->>language.ilike.%Telugu%,data->>language.ilike.%Tamil%,data->>language.ilike.%Malayalam%,data->>language.ilike.%Kannada%,data->>original_language.ilike.%Telugu%,data->>original_language.ilike.%Tamil%,data->>original_language.ilike.%Malayalam%,data->>original_language.ilike.%Kannada%');
+            } else if (normalizedTag === 'discover') {
+                // Discover: Show all movies, just filter valid ones (already done by base query)
+                query = query
+                    .not('data->>duration', 'is', null)
+                    .neq('data->>duration', 'N/A')
+                    .neq('data->>duration', '');
             } else if (mappedLang) {
                 query = query.or(`data->>language.ilike.${mappedLang},data->>original_language.ilike.${mappedLang}`);
+            } else if (normalizedTag === 'web series' || normalizedTag === 'series') {
+                query = query.eq('data->>contentType', 'series');
+            } else if (normalizedTag === 'trending') {
+                query = query.order('data->voteCount', { ascending: false }).limit(200);
+            } else if (normalizedTag === 'latest movies & series' || normalizedTag === 'latest') {
+                // No extra filters, just order by year below
             } else {
-                // General Tag Search (Broad Match)
-                // Performance Fix: Use 'contains' for JSON Arrays (Indexable) instead of ilike (Scan)
-                // Note: We check tags OR hiddenTags.
-
-                // For 'tags' (JSON Array), we use the @> operator via .contains()
-                // BUT .or() syntax with mixed types is tricky.
-
-                // Optimization: Search 'tags' specifically first, as it covers 95% of use cases
-                query = query.contains('data', { tags: [searchTag] });
-
-                // If we really need fallback to language/hiddenTags in the same query, Supabase complicates "OR" with mixed operators.
-                // However, most "Section Pages" are just clicking a Tag.
-                // So strict Tag match is actually BETTER and FASTER.
-                // We drop the loose language matching here because languages have their own Industry Map above.
+                // General Tag Search
+                query = query.contains('data', { tags: [tag] });
             }
 
-            const { data, error } = await query
-                .order('data->releaseYear', { ascending: false })
-                .range(start, start + count - 1);
+            // Apply Ordering
+            // Note: Trending has its own order logic above/below
+            if (normalizedTag !== 'trending') {
+                query = query.order('data->releaseYear', { ascending: false });
+            }
+
+            const { data, error } = await query.range(start, start + count - 1);
 
             if (error) {
-                console.error(`Failed to fetch movies for tag ${tag}:`, error);
-                return [];
+                throw error; // Trigger fallback
             }
 
             if (data) {
-                // Fetch complete
-                const newMovies = data.map(row => ({ ...row.data, id: row.id } as Movie));
+                let newMovies = data.map(row => ({ ...row, id: row.id } as unknown as Movie));
+
+                // Client-side additional sorts if needed (e.g. Trending combined sort)
+                if (normalizedTag === 'trending') {
+                    newMovies.sort((a, b) => {
+                        const yearA = parseInt(String(a.releaseYear || '0'));
+                        const yearB = parseInt(String(b.releaseYear || '0'));
+                        return yearB - yearA;
+                    });
+                }
 
                 setMovies(prev => {
                     const currentMap = new Map(prev.map(m => [m.id, m]));
@@ -771,47 +771,83 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                         }
                     });
 
-                    // Update access timestamps for new movies
-                    setCacheAge(prev => {
-                        const next = new Map(prev);
+                    // Update access timestamps
+                    setCacheAge(prevAge => {
+                        const next = new Map(prevAge);
                         newMovies.forEach(m => next.set(m.id, Date.now()));
                         return next;
                     });
 
+                    // Simple Cache Eviction Logic
                     const allMovies = Array.from(currentMap.values());
-
-                    // Cache Eviction: Remove oldest 20% if exceeding limit
                     if (allMovies.length > MAX_CACHE_SIZE) {
-                        setCacheAge(cachedAge => {
-                            const sortedByAge = Array.from(cachedAge.entries())
-                                .sort((a, b) => a[1] - b[1]);
-                            const toRemoveCount = Math.floor(sortedByAge.length * 0.2);
-                            const toRemove = new Set(
-                                sortedByAge.slice(0, toRemoveCount).map(([id]) => id)
-                            );
-
-                            // Cache eviction
-
-                            // Remove from cache age map
-                            toRemove.forEach(id => cachedAge.delete(id));
-
-                            // Filter movies
-                            const filtered = allMovies.filter(m => !toRemove.has(m.id));
-                            setMovies(filtered);
-
-                            return new Map(cachedAge);
-                        });
-                        return prev; // Return prev temporarily, setCacheAge will update
+                        // Keep most recently accessed
+                        return allMovies.slice(-MAX_CACHE_SIZE);
                     }
 
                     return changed ? allMovies : prev;
                 });
+
+                // Cache Result
+                sectionCache.current.set(cacheKey, { data: newMovies, timestamp: Date.now() });
                 return newMovies;
             }
             return [];
-        } catch (e) {
-            console.error(e);
-            return [];
+
+        } catch (err) {
+            console.warn(`[MovieContext] DB Tag Fetch Failed for ${tag}, using Fallback`, err);
+            const localData = await fetchLocalMovies();
+
+            let results: Movie[] = [];
+            const normalizedTag = tag.toLowerCase();
+
+            // Fallback Filtering Logic
+            if (normalizedTag === 'trending') {
+                results = [...localData].sort((a, b) => {
+                    const yearA = parseInt(String(a.releaseYear || '0'));
+                    const yearB = parseInt(String(b.releaseYear || '0'));
+                    return (yearB - yearA) + ((b.voteCount || 0) - (a.voteCount || 0));
+                }).slice(start, start + count);
+            } else if (normalizedTag === 'latest' || normalizedTag.includes('latest')) {
+                results = [...localData].sort((a, b) => {
+                    const yearA = parseInt(String(a.releaseYear || '0'));
+                    const yearB = parseInt(String(b.releaseYear || '0'));
+                    return yearB - yearA;
+                }).slice(start, start + count);
+            } else if (normalizedTag === 'web series' || normalizedTag === 'series') {
+                results = localData.filter(m => m.contentType === 'series').slice(start, start + count);
+            } else if (tag === 'South Indian') {
+                // Fallback: South Indian Languages
+                const southLangs = ['Telugu', 'Tamil', 'Malayalam', 'Kannada'];
+                results = localData.filter(m =>
+                    southLangs.some(lang => m.language?.includes(lang) || m.original_language?.includes(lang))
+                ).slice(start, start + count);
+            } else if (normalizedTag === 'discover') {
+                // Fallback: All Movies (paginated)
+                results = localData.slice(start, start + count);
+            } else {
+                // General Tag Match
+                // Industry Map for Fallback
+                const industryMap: Record<string, string> = {
+                    'Hollywood': 'English',
+                    'Bollywood': 'Hindi',
+                    'Tollywood': 'Telugu',
+                    'Kollywood': 'Tamil',
+                    'Mollywood': 'Malayalam',
+                    'Sandalwood': 'Kannada',
+                };
+                const lang = industryMap[tag];
+
+                results = localData.filter(m => {
+                    // Tag Match
+                    if (m.tags?.some(t => t.toLowerCase() === normalizedTag)) return true;
+                    // Language Match (if industry)
+                    if (lang && m.language?.includes(lang)) return true;
+                    return false;
+                }).slice(start, start + count);
+            }
+
+            return results;
         }
     }, []);
 

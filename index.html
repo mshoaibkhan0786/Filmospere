@@ -6,12 +6,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#141414" />
   <meta name="theme-color" content="#141414" />
-  <link rel="icon" type="image/png" href="/favicon.png?v=13" />
-  <link rel="alternate icon" href="/favicon.ico?v=13" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <!-- <link rel="alternate icon" href="/favicon.ico?v=13" /> -->
   <link rel="manifest" href="/manifest.json" />
 
   <!-- SEO Meta Tags -->
   <meta name="google-site-verification" content="pgPYhce5g1BoB5SzNdwXVy1OxpuayF0OMShAlICJQmQ" />
+
+  <!-- Organization Schema for Google Search Logo -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Filmospere",
+      "url": "https://filmospere.com",
+      "logo": "https://image.tmdb.org/t/p/original/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg",
+      "sameAs": []
+    }
+  </script>
+
+  <!-- WebSite Schema for Sitelinks Search Box -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "url": "https://filmospere.com/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://filmospere.com/?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+  </script>
 
   <title>Filmospere</title>
 </head>

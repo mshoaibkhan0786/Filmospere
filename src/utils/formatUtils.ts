@@ -108,6 +108,11 @@ export const getDurationInMinutes = (duration: string | undefined): number => {
 };
 
 export const isValidContent = (content: { duration?: string; posterUrl?: string }): boolean => {
+    // Check for Series/Seasons first - always valid if it has a poster
+    if (content.duration && String(content.duration).toLowerCase().includes('season')) {
+        return !!content.posterUrl && content.posterUrl !== 'N/A' && content.posterUrl.trim() !== '';
+    }
+
     const validDuration = getDurationInMinutes(content.duration) >= 15;
     const validPoster = !!content.posterUrl && content.posterUrl !== 'N/A' && content.posterUrl.trim() !== '';
     return validDuration && validPoster;

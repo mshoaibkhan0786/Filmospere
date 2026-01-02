@@ -70,6 +70,8 @@ const Login: React.FC = () => {
                                 setKey(e.target.value);
                                 setError(false);
                             }}
+                            name="security-key"
+                            id="admin-key"
                             placeholder="Enter Security Key"
                             autoFocus
                             style={{

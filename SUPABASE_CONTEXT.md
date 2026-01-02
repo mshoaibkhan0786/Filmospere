@@ -91,6 +91,11 @@ Used for storing cached actor/director details.
     *   Stores the entire movie object including `slug`, `cast`, `crew`, `streamingLinks`, etc.
     *   **CRITICAL**: The `slug` is **NOT** a top-level column. It is located at `data->slug`.
     *   To get the slug, you must select `data` and parse it (e.g., `data->slug` or in JS `movie.data.slug`).
+    -- 1. Support Sorting by Release Year (Used in Home/Trending/Discover)
+CREATE INDEX IF NOT EXISTS idx_movies_data_releaseYear ON movies ((data->'releaseYear'));
+
+-- 2. Support Sorting by Vote Count (Used in Trending/Popular)
+CREATE INDEX IF NOT EXISTS idx_movies_data_voteCount ON movies ((data->'voteCount'));
 *   **Foreign Keys**:
     *   There is NO database-level Foreign Key between `articles` and `movies`.
     *   Joins (e.g., `select('*, movie:movies(slug)')`) **WILL FAIL**.

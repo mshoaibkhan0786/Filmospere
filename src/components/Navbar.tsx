@@ -146,6 +146,8 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                                     setIsExpanded(false);
                                 }
                             }}
+                            name="search"
+                            id="navbar-search"
                             className={`search-input ${isSearchVisible ? 'visible' : ''}`}
                         />
                         {/* Close/Clear Icon for Search (Mobile mostly) */}

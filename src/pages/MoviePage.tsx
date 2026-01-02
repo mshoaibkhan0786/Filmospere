@@ -121,7 +121,15 @@ const MoviePage: React.FC = () => {
         }
     }, [movie, fetchMovieById]);
     // Initialize loading state based on whether we found the movie in cache
-    const [isFetching, setIsFetching] = useState(() => !getMovie(id || ''));
+    // Initialize loading state based on whether we found the movie in cache AND it has details
+    const [isFetching, setIsFetching] = useState(() => {
+        const cached = getMovie(id || '');
+        const isDetailed = cached &&
+            cached.description &&
+            cached.director && cached.director !== 'Unknown' &&
+            cached.cast && cached.cast.length > 0;
+        return !isDetailed;
+    });
     const [fetchError, setFetchError] = useState(false); // New: prevent infinite loops
     const [playingTrailerId, setPlayingTrailerId] = useState<string | null>(null);
 
@@ -252,12 +260,30 @@ const MoviePage: React.FC = () => {
         const foundMovie = movies.find(m => m.id === id || m.slug === id);
 
         // Helper to check if movie has full details (not just cached partial)
+        // For Series, we don't strictly require a director as they often have "Creators"
         const isDetailed = foundMovie &&
-            foundMovie.director && foundMovie.director !== 'Unknown' &&
             foundMovie.description && foundMovie.description.length > 0 &&
-            (foundMovie.cast && foundMovie.cast.length > 0);
+            (foundMovie.cast && foundMovie.cast.length > 0) &&
+            (foundMovie.contentType === 'series' || (foundMovie.director && foundMovie.director !== 'Unknown'));
 
         if (foundMovie) {
+            // Check if we already have a BETTER (detailed) version locally
+            // This prevents an infinite loop where:
+            // 1. We have partial data in context
+            // 2. We fetch full data and set it to local state
+            // 3. This effect runs again, sees partial data in context, and OVERWRITES local state
+            // 4. We trigger fetch again -> infinite loop
+            const isLocalDetailed = movie && (movie.id === id || movie.slug === id) &&
+                movie.description && movie.description.length > 0 &&
+                movie.cast && movie.cast.length > 0 &&
+                (movie.contentType === 'series' || (movie.director && movie.director !== 'Unknown'));
+
+            if (isLocalDetailed) {
+                // We have full data locally, ignore the partial context data
+                setIsFetching(false);
+                return;
+            }
+
             setMovie(foundMovie);
 
             if (isDetailed) {
@@ -703,21 +729,40 @@ const MoviePage: React.FC = () => {
                             <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
                                 <div style={{ flex: 1 }}>
                                     <div style={{ marginBottom: '1.5rem' }}>
-                                        <div style={{ color: '#888', fontSize: '0.9rem', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Director</div>
-                                        <div style={{ fontWeight: 500 }}>
-                                            {['unknown', 'n/a'].includes((movie.director || '').toLowerCase()) ? (
-                                                <span>{movie.director || 'Unknown'}</span>
-                                            ) : (
-                                                <Link
-                                                    to={`/person/director-${encodeURIComponent(movie.director || '')}`}
-                                                    style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
-                                                    onMouseEnter={e => e.currentTarget.style.color = '#e50914'}
-                                                    onMouseLeave={e => e.currentTarget.style.color = 'inherit'}
-                                                >
-                                                    {movie.director}
-                                                </Link>
-                                            )}
-                                        </div>
+                                        {/* Logic: Show Creator if Director is missing, otherwise show Director */}
+                                        {(() => {
+                                            const hasDirector = movie.director && !['unknown', 'n/a'].includes(movie.director.toLowerCase());
+                                            const showCreator = !hasDirector && movie.creator;
+
+                                            if (showCreator) {
+                                                return (
+                                                    <>
+                                                        <div style={{ color: '#888', fontSize: '0.9rem', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Creator</div>
+                                                        <div style={{ fontWeight: 500 }}>{movie.creator}</div>
+                                                    </>
+                                                );
+                                            } else {
+                                                return (
+                                                    <>
+                                                        <div style={{ color: '#888', fontSize: '0.9rem', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Director</div>
+                                                        <div style={{ fontWeight: 500 }}>
+                                                            {!hasDirector ? (
+                                                                <span>{movie.director || 'Unknown'}</span>
+                                                            ) : (
+                                                                <Link
+                                                                    to={`/person/director-${encodeURIComponent(movie.director || '')}`}
+                                                                    style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+                                                                    onMouseEnter={e => e.currentTarget.style.color = '#e50914'}
+                                                                    onMouseLeave={e => e.currentTarget.style.color = 'inherit'}
+                                                                >
+                                                                    {movie.director}
+                                                                </Link>
+                                                            )}
+                                                        </div>
+                                                    </>
+                                                );
+                                            }
+                                        })()}
                                     </div>
 
                                     {(movie.languages || movie.language) && (

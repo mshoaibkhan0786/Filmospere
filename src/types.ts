@@ -77,6 +77,7 @@ export interface Movie extends PartialMovie {
   status?: string; // e.g. 'Released', 'Post Production'
   tagline?: string;
   director: string;
+  creator?: string;
   voteCount: number;
   views: number;
   hiddenTags?: string[];
@@ -85,6 +86,7 @@ export interface Movie extends PartialMovie {
   streamingLinks: StreamingLink[];
   videoUrl?: string;
   language?: string;
+  original_language?: string;
   languages?: string[];
   seasons?: Season[];
   videos?: Video[];

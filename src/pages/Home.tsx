@@ -258,8 +258,30 @@ const Home: React.FC = () => {
         if (isLoading || movies.length === 0) return;
 
         const currentYear = new Date().getFullYear();
-        // 1. Filter for movies from the current year AND ensure they have a description
-        const currentYearMovies = movies.filter(m => m.releaseYear === currentYear && m.description && m.description.length > 0);
+        const today = new Date();
+
+        // 1. Filter for movies from the current (or previous) year that are RELEASED and VALID
+        const currentYearMovies = movies.filter(m => {
+            // Must be current OR previous year (Context: early new year gaps)
+            if (m.releaseYear !== currentYear && m.releaseYear !== currentYear - 1) return false;
+
+            // Must have a description
+            if (!m.description || m.description.length === 0) return false;
+
+            // STATUS CHECK: If status is known, it must be 'Released'
+            if (m.status && m.status !== 'Released') return false;
+
+            // DATE CHECK: Release date must be in the past
+            if (m.releaseDate) {
+                const rDate = new Date(m.releaseDate);
+                if (!isNaN(rDate.getTime()) && rDate > today) return false;
+            }
+
+            // DURATION CHECK: Must not be 0 or empty
+            if (!m.duration || m.duration === '0' || m.duration.startsWith('0')) return false;
+
+            return true;
+        });
 
         if (currentYearMovies.length === 0) return;
 
@@ -325,13 +347,13 @@ const Home: React.FC = () => {
                 <meta property="og:url" content="https://filmospere.com/" />
                 <meta property="og:title" content="Filmospere - Discover Movies & Series" />
                 <meta property="og:description" content="Filmospere is your ultimate destination for discovering movies and TV series. Explore trending titles, browse by genre, and find where to watch your favorites." />
-                <meta property="og:image" content="https://filmospere.com/favicon.png" />
+                <meta property="og:image" content="https://image.tmdb.org/t/p/original/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg" />
 
                 {/* Twitter */}
-                <meta name="twitter:card" content="summary" />
+                <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="Filmospere - Discover Movies & Series" />
                 <meta name="twitter:description" content="Filmospere is your ultimate destination for discovering movies and TV series. Explore trending titles, browse by genre, and find where to watch your favorites." />
-                <meta name="twitter:image" content="https://filmospere.com/favicon.png" />
+                <meta name="twitter:image" content="https://image.tmdb.org/t/p/original/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg" />
 
                 <script type="application/ld+json">{JSON.stringify(schemaData)}</script>
             </Helmet>

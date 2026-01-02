@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PageSkeleton from './components/PageSkeleton';
 import ArticleSkeleton from './components/ArticleSkeleton';
 import ArticleIndexSkeleton from './components/ArticleIndexSkeleton';
+import SectionSkeleton from './components/SectionSkeleton';
 
 import ScrollToTop from './components/ScrollToTop';
 
@@ -47,7 +48,13 @@ function App() {
               {/* Main Site Routes */}
               <Route path="/" element={<Home />} />
               <Route path="/movie/:id" element={<MoviePage />} />
-              <Route path="/section/:title" element={<SectionPage />} />
+
+              <Route path="/section/:title" element={
+                <Suspense fallback={<SectionSkeleton />}>
+                  <SectionPage />
+                </Suspense>
+              } />
+
               <Route path="/person/:id" element={<PersonPage />} />
 
               {/* Articles Routes */}
