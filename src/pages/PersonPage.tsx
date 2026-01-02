@@ -462,7 +462,26 @@ const PersonPage: React.FC = () => {
     }, [isLoadingMore, displayedMovies.length, filteredMovies.length, allRelevantMovies.length, apiTotalCount, handleLoadMore]);
 
     if (isLoading || isPersonLoading || isDetailsLoading) {
-        return <PersonSkeleton />;
+        // INSTANT METADATA: Parse name from URL ID so Google sees it immediately (while Skeleton shows)
+        let instantName = 'Person';
+        if (id) {
+            // Remove the trailing ID (e.g. "michael-c-hall-53820" -> "michael c hall")
+            const cleanSlug = id.replace(/-?\d+$/, '').replace(/-/g, ' ');
+            // Capitalize (e.g. "Michael C Hall")
+            instantName = cleanSlug.replace(/\b\w/g, c => c.toUpperCase()).trim();
+            if (!instantName) instantName = 'Person Details'; // Fallback if ID was just numbers
+        }
+
+        return (
+            <>
+                <Helmet>
+                    <title>{instantName} - Filmospere</title>
+                    <meta name="description" content={`Explore movies, biography, and filmography of ${instantName} on Filmospere. The ultimate destination for discovering ${instantName}'s work.`} />
+                    <meta name="robots" content="index, follow" />
+                </Helmet>
+                <PersonSkeleton />
+            </>
+        );
     }
 
     if (!person) {

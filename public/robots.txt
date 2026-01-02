@@ -9,4 +9,4 @@ Disallow: /login
 # Disallow internal search if needed (optional, keeping open for now as user wants visibility)
 # Disallow: /?search=
 
-Sitemap: https://filmospere.com/sitemap.xml
+Sitemap: https://filmospere.com/sitemap-index.xml

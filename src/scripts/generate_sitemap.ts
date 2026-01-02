@@ -27,8 +27,12 @@ const urlTemplate = (loc: string, lastmod?: string, changefreq: string = 'weekly
 
 async function main() {
     console.log('🚀 Starting Sitemap Generation...');
-    const urls: string[] = [];
     const today = new Date().toISOString();
+    // Arrays to hold URLs for each sitemap
+    const staticUrls: string[] = [];
+    const movieUrls: string[] = [];
+    const articleUrls: string[] = [];
+    const personUrls: string[] = [];
 
     // 1. Static Pages
     const staticPages = [
@@ -44,20 +48,20 @@ async function main() {
     ];
 
     staticPages.forEach(p => {
-        urls.push(urlTemplate(`${DOMAIN}${p.path}`, today, p.freq, p.priority));
+        staticUrls.push(urlTemplate(`${DOMAIN}${p.path}`, today, p.freq, p.priority));
     });
-    console.log(`✅ Added ${staticPages.length} static pages.`);
+    console.log(`✅ (Static) Added ${staticPages.length} pages.`);
 
-    // 2. Movies - Fetching with Cursor-based Pagination (to avoid deep offset timeouts)
+    // 2. Movies
     const MovieBatchSize = 1000;
     let moviesCount = 0;
-    let lastMovieId = ''; // IDs are strings (e.g., "tmdb-1234")
+    let lastMovieId = '';
 
     while (true) {
         let query = supabase
             .from('movies')
             .select('id, data, updated_at')
-            .order('id', { ascending: true }) // Must order by ID for cursor
+            .order('id', { ascending: true })
             .limit(MovieBatchSize);
 
         if (lastMovieId) {
@@ -75,27 +79,15 @@ async function main() {
 
         movies.forEach(m => {
             const slug = m.data?.slug || m.id;
-            const title = m.data?.title || m.title || 'Unknown';
-
-            // Debug Adult Content
-            if (['balinsasayaw', 'kulong', 'experimento', 'eks', 'rita', 'arouse', 'bayo', 'ekis', 'kirot', 'anor'].some(k => slug.toLowerCase().includes(k))) {
-                const logMsg = `ID:${m.id}|Slug:${slug}|Title:${title}\n`;
-                console.log(`\n🔥 MATCH: ${logMsg.trim()}`);
-                const logPath = path.resolve(__dirname, 'adult_ids.txt');
-                fs.appendFileSync(logPath, logMsg);
-            }
-
             const lastMod = m.updated_at || today;
-            urls.push(urlTemplate(`${DOMAIN}/movie/${slug}`, lastMod, 'weekly', 0.8));
+            movieUrls.push(urlTemplate(`${DOMAIN}/movie/${slug}`, lastMod, 'weekly', 0.8));
         });
 
         moviesCount += movies.length;
-        lastMovieId = movies[movies.length - 1].id; // Move cursor
-
-        // Log progress every 5000
+        lastMovieId = movies[movies.length - 1].id;
         if (moviesCount % 5000 === 0) console.log(`...fetched ${moviesCount} movies`);
     }
-    console.log(`✅ Added ${moviesCount} movies.`);
+    console.log(`✅ (Movies) Added ${moviesCount} pages.`);
 
     // 3. Articles
     const { data: articles, error: articleError } = await supabase
@@ -106,12 +98,12 @@ async function main() {
     else if (articles) {
         articles.forEach(a => {
             const lastMod = a.created_at || today;
-            urls.push(urlTemplate(`${DOMAIN}/articles/${a.slug}`, lastMod, 'monthly', 0.7)); // Fixed path
+            articleUrls.push(urlTemplate(`${DOMAIN}/articles/${a.slug}`, lastMod, 'monthly', 0.7));
         });
-        console.log(`✅ Added ${articles.length} articles.`);
+        console.log(`✅ (Articles) Added ${articles.length} pages.`);
     }
 
-    // 4. People - Fetching with Pagination and Filtering
+    // 4. People
     const PersonBatchSize = 1000;
     let personPage = 0;
     let personAddedCount = 0;
@@ -120,7 +112,7 @@ async function main() {
     while (true) {
         const { data: people, error: personError } = await supabase
             .from('cast')
-            .select('tmdb_id, updated_at, biography')
+            .select('tmdb_id, updated_at, biography, name')
             .not('biography', 'is', null)
             .range(personPage * PersonBatchSize, (personPage + 1) * PersonBatchSize - 1);
 
@@ -134,7 +126,21 @@ async function main() {
         people.forEach(p => {
             if (p.biography && p.biography.length > 50) {
                 const lastMod = p.updated_at || today;
-                urls.push(urlTemplate(`${DOMAIN}/person/${p.tmdb_id}`, lastMod, 'monthly', 0.6));
+
+                // Create SEO-friendly slug
+                const nameSlug = p.name
+                    ? p.name.toLowerCase()
+                        .trim()
+                        .replace(/[^\w\s-]/g, '') // Remove special chars
+                        .replace(/\s+/g, '-')     // Spaces to dashes
+                        .replace(/-+/g, '-')      // Collapse dashes
+                    : 'person';
+
+                // Format: /person/michael-c-hall-tmdb-12345 (or just 12345 if typical)
+                // The regex /-([\d]+)$/ handles extracting the ID from the end regardless of prefix
+                const finalSlug = `${nameSlug}-${p.tmdb_id}`;
+
+                personUrls.push(urlTemplate(`${DOMAIN}/person/${finalSlug}`, lastMod, 'monthly', 0.6));
                 personAddedCount++;
             } else {
                 personSkippedCount++;
@@ -144,26 +150,63 @@ async function main() {
         if (people.length < PersonBatchSize) break;
         personPage++;
     }
-    console.log(`✅ Added ${personAddedCount} people (Skipped ${personSkippedCount} short bios).`);
+    console.log(`✅ (People) Added ${personAddedCount} pages (Skipped ${personSkippedCount}).`);
 
-    // Build XML
-    const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
+    // 5. Sitemap Helpers
+    const writeSitemap = (filename: string, urlList: string[]) => {
+        const content = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.join('')}
+${urlList.join('')}
 </urlset>`;
 
-    // Write to public/sitemap.xml
-    const publicDir = path.resolve(__dirname, '../../public');
-    // Ensure public exists (it should)
-    if (!fs.existsSync(publicDir)) {
-        console.log('Creating public directory...');
-        fs.mkdirSync(publicDir, { recursive: true });
-    }
+        const filePath = path.join(publicDir, filename);
+        fs.writeFileSync(filePath, content);
+        console.log(`✅ Generated: ${filename} (${urlList.length} URLs)`);
+    };
 
-    const filePath = path.join(publicDir, 'sitemap.xml');
-    fs.writeFileSync(filePath, sitemapContent);
-    console.log(`🎉 Sitemap generated at: ${filePath}`);
-    console.log(`   Total URLs: ${urls.length}`);
+    // --- WRITE SUB-SITEMAPS ---
+    const publicDir = path.resolve(__dirname, '../../public');
+    if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
+
+    // Static
+    writeSitemap('sitemap-static.xml', staticUrls);
+
+    // Movies (Split if needed, but for now 10k fits in one file easily. Limit is 50k)
+    writeSitemap('sitemap-movies.xml', movieUrls);
+
+    // People
+    writeSitemap('sitemap-people.xml', personUrls);
+
+    // Articles
+    writeSitemap('sitemap-articles.xml', articleUrls);
+
+    // --- GENERATE INDEX ---
+    const todaySimple = new Date().toISOString();
+    const sitemapIndexContent = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <sitemap>
+        <loc>${DOMAIN}/sitemap-static.xml</loc>
+        <lastmod>${todaySimple}</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>${DOMAIN}/sitemap-movies.xml</loc>
+        <lastmod>${todaySimple}</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>${DOMAIN}/sitemap-people.xml</loc>
+        <lastmod>${todaySimple}</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>${DOMAIN}/sitemap-articles.xml</loc>
+        <lastmod>${todaySimple}</lastmod>
+    </sitemap>
+</sitemapindex>`;
+
+    const indexFilePath = path.join(publicDir, 'sitemap-index.xml');
+    fs.writeFileSync(indexFilePath, sitemapIndexContent);
+
+    console.log(`🎉 Sitemap Index generated at: ${indexFilePath}`);
+    console.log(`   Total URLs: ${staticUrls.length + movieUrls.length + personUrls.length + articleUrls.length}`);
 }
 
 main();

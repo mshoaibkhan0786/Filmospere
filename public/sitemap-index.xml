@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <sitemap>
+        <loc>https://filmospere.com/sitemap-static.xml</loc>
+        <lastmod>2026-01-02T07:39:30.649Z</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>https://filmospere.com/sitemap-movies.xml</loc>
+        <lastmod>2026-01-02T07:39:30.649Z</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>https://filmospere.com/sitemap-people.xml</loc>
+        <lastmod>2026-01-02T07:39:30.649Z</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>https://filmospere.com/sitemap-articles.xml</loc>
+        <lastmod>2026-01-02T07:39:30.649Z</lastmod>
+    </sitemap>
+</sitemapindex>

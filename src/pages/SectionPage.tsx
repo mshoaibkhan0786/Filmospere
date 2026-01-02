@@ -293,6 +293,7 @@ const SectionPage: React.FC = () => {
         <div style={{ minHeight: '100vh', backgroundColor: '#141414', paddingBottom: '2rem' }}>
             <Helmet>
                 <title>{isSearchMode ? `Search: ${debouncedSearch}` : decodedTitle} - Filmospere</title>
+                {isSearchMode && <meta name="robots" content="noindex, follow" />}
             </Helmet>
             <Navbar onSearch={setSearchQuery} />
 
