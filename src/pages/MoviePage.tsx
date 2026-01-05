@@ -441,11 +441,85 @@ const MoviePage: React.FC = () => {
         (!movie.images || movie.images.length === 0)
     );
 
+    // --- INSTANT METADATA GENERATION (SEO FIX) ---
+    // We calculate this EARLY so we can render it even while the Skeleton is showing.
+    // This prevents Googlebot from seeing a "Blank Page" and dropping the index.
+    const getSeoMetadata = () => {
+        // 1. If we have the full movie, use its data (Perfect)
+        if (movie && !isIncomplete) {
+            return {
+                title: movie.metaTitle || `${movie.title} (${movie.releaseYear}) | Filmospere`,
+                description: movie.metaDescription || movie.description || `Watch ${movie.title} on Filmospere.`,
+                image: `https://image.tmdb.org/t/p/w780${movie.posterUrl}`,
+                url: window.location.href,
+                keywords: movie.keywords
+            };
+        }
+
+        // 2. If we have partial data (better than nothing)
+        if (movie) {
+            return {
+                title: `${movie.title} | Filmospere`,
+                description: `Watch ${movie.title} on Filmospere. Loading movie details...`,
+                image: movie.posterUrl ? `https://image.tmdb.org/t/p/w780${movie.posterUrl}` : 'https://filmospere.com/og-image.jpg',
+                url: window.location.href
+            };
+        }
+
+        // 3. Fallback: Parse from URL ID (Worst case, but instant)
+        // e.g. /movie/iron-man-2008 -> "Iron Man 2008"
+        let fallbackTitle = 'Movie Details';
+        if (id) {
+            // Remove trailing numbers (IDs)
+            const cleanSlug = id.replace(/-?\d+$/, '').replace(/-/g, ' ');
+            // Capitalize
+            fallbackTitle = cleanSlug.replace(/\b\w/g, c => c.toUpperCase()).trim();
+        }
+
+        return {
+            title: `${fallbackTitle} | Filmospere`,
+            description: `Watch ${fallbackTitle} on Filmospere. Discover where to stream, cast, and more.`,
+            image: 'https://filmospere.com/og-image.jpg',
+            url: window.location.href
+        };
+    };
+
+    const seo = getSeoMetadata();
+    const HelmetBlock = (
+        <Helmet>
+            <title>{seo.title}</title>
+            <meta name="description" content={seo.description} key="description" />
+            {seo.keywords && <meta name="keywords" content={seo.keywords} />}
+            <link rel="canonical" href={seo.url} />
+
+            {/* Open Graph */}
+            <meta property="og:title" content={seo.title} />
+            <meta property="og:description" content={seo.description} />
+            <meta property="og:image" content={seo.image} />
+            <meta property="og:type" content="video.movie" />
+            <meta property="og:url" content={seo.url} />
+
+            {/* Twitter */}
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content={seo.title} />
+            <meta name="twitter:description" content={seo.description} />
+            <meta name="twitter:image" content={seo.image} />
+            
+            {/* Indexing Rules: Always allow indexing, even during load */}
+            <meta name="robots" content="index, follow" />
+        </Helmet>
+    );
+
     // Show Skeleton if:
     // 1. We are loading AND have no movie
     // 2. We are loading (upgrading) AND the current movie is incomplete (would look broken)
     if ((isLoading && !movie) || (isLoading && isIncomplete)) {
-        return <PageSkeleton />;
+        return (
+            <>
+                {HelmetBlock}
+                <PageSkeleton />
+            </>
+        );
     }
 
 
