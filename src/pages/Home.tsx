@@ -366,6 +366,11 @@ const Home: React.FC = () => {
 
             {isLoading && !searchQuery && <HeroSkeleton />}
 
+            {/* Hidden H1 for SEO (Bing/Google requirement) */}
+            <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
+                Filmospere - Watch Movies & Series
+            </h1>
+
             <main className="container" style={{ position: 'relative', zIndex: 20 }}>
                 {searchQuery ? (
                     <>
