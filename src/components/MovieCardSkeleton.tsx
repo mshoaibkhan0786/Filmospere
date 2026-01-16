@@ -21,10 +21,6 @@ const MovieCardSkeleton: React.FC = () => {
             }}>
                 <div className="skeleton-shimmer" style={{ width: '100%', height: '100%' }} />
             </div>
-
-
-
-
         </div>
     );
 };

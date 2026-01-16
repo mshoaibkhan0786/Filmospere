@@ -1,6 +1,9 @@
+"use client";
+
 import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
+import Image from 'next/image';
 import type { CastMember } from '../types';
 
 import { getOptimizedImageUrl } from '../utils/imageOptimizer';
@@ -128,7 +131,7 @@ const CastCard: React.FC<{ member: CastMember }> = ({ member }) => {
     const personLink = `/person/${slug}-${rawId}`;
 
     return (
-        <Link to={personLink} style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Link href={personLink} style={{ textDecoration: 'none', color: 'inherit' }}>
             <div
                 style={{
                     textAlign: 'center',
@@ -170,21 +173,22 @@ const CastCard: React.FC<{ member: CastMember }> = ({ member }) => {
                     )}
 
                     {member.imageUrl && !hasError ? (
-                        <img
+                        <Image
                             src={getOptimizedImageUrl(member.imageUrl, 200)}
                             alt={member.name}
+                            fill
+                            sizes="(max-width: 768px) 100px, 140px"
                             onLoad={() => setImageLoaded(true)}
                             onError={() => {
                                 setHasError(true);
                                 setImageLoaded(true);
                             }}
                             style={{
-                                width: '100%',
-                                height: '100%',
                                 objectFit: 'cover',
                                 opacity: imageLoaded ? 1 : 0,
                                 transition: 'opacity 0.3s ease'
                             }}
+                            unoptimized={!!member.imageUrl.includes('wsrv.nl') || !!member.imageUrl.includes('ui-avatars')}
                         />
                     ) : (
                         <div className="flex-center" style={{ width: '100%', height: '100%', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

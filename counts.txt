@@ -1,0 +1,10 @@
+[dotenv@17.2.3] injecting env (7) from .env.local -- tip: ­ƒøá´©Å  run anywhere with `dotenvx run -- yourcommand`
+Counting indexable content...
+--------------------------------
+Movies: 10003
+Articles: 17
+People (Cast): 46432
+Static Pages: 12
+--------------------------------
+TOTAL INDEXABLE PAGES: 56464
+--------------------------------

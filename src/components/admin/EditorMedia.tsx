@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { Trash2, Crop } from 'lucide-react';
 import type { Movie } from '../../types';
@@ -16,8 +18,6 @@ const EditorMedia: React.FC<EditorMediaProps> = ({ formData, setFormData }) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
-
-    // ... existing Add button logic ...
 
     // Logic helper for adding images
     const handleAddImage = () => {

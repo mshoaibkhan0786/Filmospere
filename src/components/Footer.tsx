@@ -1,8 +1,16 @@
+"use client";
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const Footer: React.FC = () => {
+    const pathname = usePathname();
+
+    if (pathname.startsWith('/admin')) {
+        return null;
+    }
+
     return (
         <footer style={{
             padding: '2rem 0',
@@ -20,57 +28,49 @@ const Footer: React.FC = () => {
                 marginBottom: '0.5rem'
             }}>
                 <Link
-                    to="/about"
+                    href="/about"
                     style={{
                         color: '#444',
                         textDecoration: 'none',
                         padding: '0.5rem',
                         transition: 'color 0.2s'
                     }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#888'}
-                    onMouseLeave={e => e.currentTarget.style.color = '#444'}
                 >
                     About & Credits
                 </Link>
 
                 <Link
-                    to="/privacy"
+                    href="/privacy"
                     style={{
                         color: '#444',
                         textDecoration: 'none',
                         padding: '0.5rem',
                         transition: 'color 0.2s'
                     }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#888'}
-                    onMouseLeave={e => e.currentTarget.style.color = '#444'}
                 >
                     Privacy Policy
                 </Link>
 
                 <Link
-                    to="/terms"
+                    href="/terms"
                     style={{
                         color: '#444',
                         textDecoration: 'none',
                         padding: '0.5rem',
                         transition: 'color 0.2s'
                     }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#888'}
-                    onMouseLeave={e => e.currentTarget.style.color = '#444'}
                 >
                     Terms of Service
                 </Link>
 
                 <Link
-                    to="/contact"
+                    href="/contact"
                     style={{
                         color: '#444',
                         textDecoration: 'none',
                         padding: '0.5rem',
                         transition: 'color 0.2s'
                     }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#888'}
-                    onMouseLeave={e => e.currentTarget.style.color = '#444'}
                 >
                     Contact
                 </Link>

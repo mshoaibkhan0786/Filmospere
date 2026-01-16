@@ -12,35 +12,25 @@ export const getOptimizedImageUrl = (url: string, width: number = 300, quality: 
     if (!url) return '';
     if (url.startsWith('data:')) return url;
 
-    // Handle partial TMDB paths (e.g. "/path/to/image.jpg")
+    // 1. Handle partial TMDB paths (e.g. "/path/to/image.jpg") -> Resolve to full URL first
+    let fullUrl = url;
     if (url.startsWith('/')) {
-        url = `https://image.tmdb.org/t/p/original${url}`;
+        fullUrl = `https://image.tmdb.org/t/p/original${url}`;
     }
 
-    // TMDB Optimization: Use native TMDB CDN sizes
-    // Available widths: w92, w154, w185, w342, w500, w780, original
-    if (url.includes('image.tmdb.org')) {
-        let tmdbSize = 'original';
-        if (width <= 92) tmdbSize = 'w92';
-        else if (width <= 154) tmdbSize = 'w154';
-        else if (width <= 185) tmdbSize = 'w185';
-        else if (width <= 342) tmdbSize = 'w342';
-        else if (width <= 500) tmdbSize = 'w500';
-        else if (width <= 780) tmdbSize = 'w780';
+    // 2. Prevent Double Proxying
+    if (fullUrl.includes('wsrv.nl')) return fullUrl;
 
-        // Replace current size part of path (e.g. /original/ or /w500/) with optimized size
-        // This handles cases where url is already https://image.tmdb.org/t/p/original/xfw...
-        return url.replace(/\/t\/p\/[^\/]+\//, `/t/p/${tmdbSize}/`);
-    }
-
-    // Avoid double-proxying
-    if (url.includes('wsrv.nl')) return url;
-
+    // 3. WS.RV Logic (The Free Global CDN)
+    // We use this for EVERYTHING now to bypass Vercel's processing limits.
+    // It is fast, free, and supports WebP/AVIF.
     try {
-        const encodedUrl = encodeURIComponent(url);
+        const encodedUrl = encodeURIComponent(fullUrl);
+        // "af" = adaptive format (serves WebP/AVIF automatically based on browser)
+        // "l" = compression level (default is usually good, but we pass q)
         return `https://wsrv.nl/?url=${encodedUrl}&w=${width}&q=${quality}&output=webp`;
     } catch (e) {
         console.error('Failed to optimize image URL:', e);
-        return url;
+        return fullUrl;
     }
 };

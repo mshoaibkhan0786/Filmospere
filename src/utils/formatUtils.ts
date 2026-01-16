@@ -178,20 +178,6 @@ export const formatLanguage = (languageCode: string | undefined): string => {
         if (languageMap[code]) return languageMap[code];
 
         // 2. Check Native Map (handling case sensitivity)
-        // Try exact match first, then capitalize
-        /* NOTE: logic above lowercases everything. Native scripts usually don't have case, but let's be safe */
-        /* Actually, 'codes' splits by comma and lowercase. Non-latin often unchanged by toLowerCase(). */
-        /* But native maps keys above are capitalized/normal. */
-
-        // We need to match case-insensitive against our keys? 
-        // Iterate or just check common variations?
-        // Simpler: revert the lowercasing for the value lookup if possible, or just look up directly.
-        // Since we lowercased 'code' via `code.trim().toLowerCase()`:
-        // 'हिन्दी'.toLowerCase() is 'हिन्दी'.
-
-        // Let's iterate if not found (expensive?) or just check keys.
-        // Better: Make nativeToLatinMap usage robust.
-
         const foundNative = Object.keys(nativeToLatinMap).find(key => key.toLowerCase() === code);
         if (foundNative) return nativeToLatinMap[foundNative];
 
@@ -217,4 +203,3 @@ export const extractIdFromSlug = (slug: string): string => {
     const match = slug.match(/-?(\d+)$/) || slug.match(/^(\d+)$/);
     return match ? match[1] : slug;
 };
-

@@ -13,10 +13,42 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({ content }) => {
     // Check for HTML content (starts with <)
     const isHtml = content.trim().startsWith('<');
 
+    const styles = (
+        <style>
+            {`
+            .article-content {
+                font-family: 'Georgia', serif; /* Classic reading font */
+                line-height: 1.8;
+                color: #d1d1d1;
+                font-size: 1.15rem;
+            }
+            .article-content h1, .article-h1 { font-family: var(--font-inter), sans-serif; font-size: 2.5rem; font-weight: 800; color: white; margin: 2.5rem 0 1.5rem; letter-spacing: -0.02em; }
+            .article-content h2, .article-h2 { font-family: var(--font-inter), sans-serif; font-size: 2rem; font-weight: 700; color: white; margin: 3rem 0 1.5rem; border-left: 4px solid #e50914; padding-left: 1rem; }
+            .article-content h3, .article-h3 { font-family: var(--font-inter), sans-serif; font-size: 1.5rem; font-weight: 600; color: #f5f5f5; margin: 2rem 0 1rem; }
+            .article-content p, .article-p { margin-bottom: 1.5rem; }
+            .article-content ul, .article-list { margin-bottom: 1.5rem; padding-left: 1.5rem; list-style-type: disc; }
+            .article-content li, .article-list li { margin-bottom: 0.5rem; }
+            .article-content blockquote, .article-quote { border-left: 3px solid #e50914; margin: 2rem 0; padding: 1rem 2rem; font-style: italic; background: rgba(255,255,255,0.05); border-radius: 0 8px 8px 0; color: #fff; }
+            .article-content figure, .article-figure { margin: 3rem 0; width: 100%; }
+            .article-content img, .article-img { width: 100%; border-radius: 12px; height: auto; display: block; max-width: 100%; }
+            .article-content figcaption { text-align: center; color: #888; font-size: 0.9rem; margin-top: 0.5rem; font-family: var(--font-inter), sans-serif; }
+            .article-content strong, .article-bold { font-weight: 700; }
+            .article-content a { color: #e50914; text-decoration: underline; }
+            
+            @media (max-width: 768px) {
+                .article-content { font-size: 1.1rem; }
+                .article-content h2, .article-h2 { font-size: 1.7rem; }
+            }
+            `}
+        </style>
+    );
+
     if (isHtml) {
         return (
-            <div className="article-content" dangerouslySetInnerHTML={{ __html: content }}>
-            </div>
+            <>
+                <div className="article-content" dangerouslySetInnerHTML={{ __html: content }} />
+                {styles}
+            </>
         );
     }
 
@@ -65,40 +97,14 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({ content }) => {
                 // Paragraphs
                 return <p key={index} className="article-p">{parseInline(trimmed)}</p>;
             })}
-
-            <style>
-                {`
-                .article-content {
-                    font-family: 'Georgia', serif; /* Classic reading font */
-                    line-height: 1.8;
-                    color: #d1d1d1;
-                    font-size: 1.15rem;
-                }
-                .article-content h1, .article-h1 { font-family: 'Inter', sans-serif; font-size: 2.5rem; font-weight: 800; color: white; margin: 2.5rem 0 1.5rem; letter-spacing: -0.02em; }
-                .article-content h2, .article-h2 { font-family: 'Inter', sans-serif; font-size: 2rem; font-weight: 700; color: white; margin: 3rem 0 1.5rem; border-left: 4px solid #e50914; padding-left: 1rem; }
-                .article-content h3, .article-h3 { font-family: 'Inter', sans-serif; font-size: 1.5rem; font-weight: 600; color: #f5f5f5; margin: 2rem 0 1rem; }
-                .article-content p, .article-p { margin-bottom: 1.5rem; }
-                .article-content ul, .article-list { margin-bottom: 1.5rem; padding-left: 1.5rem; list-style-type: disc; }
-                .article-content li, .article-list li { margin-bottom: 0.5rem; }
-                .article-content blockquote, .article-quote { border-left: 3px solid #e50914; margin: 2rem 0; padding: 1rem 2rem; font-style: italic; background: rgba(255,255,255,0.05); border-radius: 0 8px 8px 0; color: #fff; }
-                .article-content figure, .article-figure { margin: 3rem 0; width: 100%; }
-                .article-content img, .article-img { width: 100%; border-radius: 12px; height: auto; display: block; max-width: 100%; }
-                .article-content figcaption { text-align: center; color: #888; font-size: 0.9rem; margin-top: 0.5rem; font-family: 'Inter', sans-serif; }
-                .article-content strong, .article-bold { font-weight: 700; }
-                .article-content a { color: #e50914; text-decoration: underline; }
-                
-                @media (max-width: 768px) {
-                    .article-content { font-size: 1.1rem; }
-                    .article-content h2, .article-h2 { font-size: 1.7rem; }
-                }
-                `}
-            </style>
+            {styles}
         </div>
     );
 };
 
 // Helper to parse bold (**text**) and italic (*text*)
 const parseInline = (text: string) => {
+    // Basic parser, can be expanded
     const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g); // Split by bold/italic markers
     return parts.map((part, index) => {
         if (part.startsWith('**') && part.endsWith('**')) {

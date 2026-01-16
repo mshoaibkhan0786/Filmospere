@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
+
 import type { Movie } from '../types';
 import { Play, ImageOff, Star } from 'lucide-react';
-
-
 import { getOptimizedImageUrl } from '../utils/imageOptimizer';
 import { formatDuration } from '../utils/formatUtils';
 
@@ -16,6 +15,20 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onClick, priority = false 
     const [imgError, setImgError] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const [isImageLoaded, setIsImageLoaded] = useState(false);
+
+    // Fallback Logic: Start with optimized, fallback to original on error
+    const [imgSrc, setImgSrc] = useState(getOptimizedImageUrl(movie.posterUrl, 400));
+
+    // Handle Image Error: Try original URL if optimized fails
+    const handleError = () => {
+        if (imgSrc !== movie.posterUrl) {
+            // If current failed src is NOT the original, try the original
+            setImgSrc(movie.posterUrl);
+        } else {
+            // If original also failed, show error placeholder
+            setImgError(true);
+        }
+    };
 
     // Safe access to tags
     const tags = movie.tags || [];
@@ -43,15 +56,24 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onClick, priority = false 
             <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#2a2a2a' }}>
                 {!imgError && movie.posterUrl ? (
                     <>
+                        {/* 
+                            Using standard <img> tag instead of next/image to match Vite version behavior 
+                            and eliminate flicker during infinite scroll updates.
+                        */}
                         <img
-                            src={getOptimizedImageUrl(movie.posterUrl, 400)}
+                            ref={(el) => {
+                                // Double check on mount/ref assignment
+                                if (el && el.complete && !isImageLoaded) {
+                                    setIsImageLoaded(true);
+                                }
+                            }}
+                            src={imgSrc}
                             alt={movie.title}
                             width="400"
                             height="600"
-                            decoding="async"
                             loading={priority ? "eager" : "lazy"}
                             onLoad={() => setIsImageLoaded(true)}
-                            onError={() => setImgError(true)}
+                            onError={handleError}
                             style={{
                                 width: '100%',
                                 height: '100%',

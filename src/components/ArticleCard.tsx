@@ -1,5 +1,8 @@
+'use client';
+
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
+import Image from 'next/image';
 import type { Article } from '../types';
 import { formatDate } from '../utils/formatUtils';
 
@@ -11,11 +14,96 @@ interface ArticleCardProps {
 const ArticleCard: React.FC<ArticleCardProps> = ({ article, variant = 'default' }) => {
     const [isHovered, setIsHovered] = useState(false);
 
+    // Compact Variant (Sidebar Style - Small Horizontal)
+    if (variant === 'compact') {
+        return (
+            <Link
+                href={`/articles/${article.slug}`}
+                style={{
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center', // Center vertically
+                    gap: '1rem',
+                    padding: '1rem',
+                    borderRadius: '12px',
+                    backgroundColor: '#1f1f1f',
+                    border: '1px solid #333',
+                    transition: 'all 0.2s ease',
+                    height: '100%',
+                    transform: isHovered ? 'translateY(-2px)' : 'none',
+                    boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.3)' : 'none',
+                    borderColor: isHovered ? '#444' : '#333'
+                }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+            >
+                {/* Small Thumbnail */}
+                <div style={{
+                    width: '120px',
+                    height: '80px',
+                    flexShrink: 0,
+                    position: 'relative',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                }}>
+                    <Image
+                        src={article.image_url || 'https://via.placeholder.com/300x200?text=No+Image'}
+                        alt={article.title}
+                        fill
+                        sizes="120px"
+                        style={{
+                            objectFit: 'cover',
+                            transition: 'transform 0.3s ease',
+                            transform: isHovered ? 'scale(1.1)' : 'scale(1)'
+                        }}
+                        unoptimized={!!(article.image_url && article.image_url.includes('wsrv.nl'))}
+                    />
+                </div>
+
+                {/* Compact Content */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                        fontSize: '0.75rem',
+                        color: '#e50914',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        marginBottom: '0.25rem',
+                        letterSpacing: '0.5px'
+                    }}>
+                        {article.category}
+                    </div>
+                    <h4 style={{
+                        margin: '0 0 0.25rem 0',
+                        fontSize: '1rem',
+                        lineHeight: '1.3',
+                        color: 'white',
+                        fontWeight: 600,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                    }}>
+                        {article.title}
+                    </h4>
+                    <div style={{
+                        fontSize: '0.8rem',
+                        color: '#888',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                    }}>
+                        <span>{formatDate(article.created_at)}</span>
+                    </div>
+                </div>
+            </Link>
+        );
+    }
+
     // Hero Variant (Big Feature)
     if (variant === 'hero') {
         return (
             <Link
-                to={`/articles/${article.slug}`}
+                href={`/articles/${article.slug}`}
                 style={{
                     textDecoration: 'none',
                     display: 'block',
@@ -53,7 +141,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, variant = 'default' 
                 <div style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(to top, #141414 0%, rgba(20,20,20,0.8) 40%, rgba(0,0,0,0.2) 100%)', // darkened top slightly
+                    background: 'linear-gradient(to top, #141414 0%, rgba(20,20,20,0.8) 40%, rgba(0,0,0,0.2) 100%)',
                     transition: 'opacity 0.4s ease',
                     opacity: 1
                 }} />
@@ -115,7 +203,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, variant = 'default' 
     // Default Card (Grid)
     return (
         <Link
-            to={`/articles/${article.slug}`}
+            href={`/articles/${article.slug}`}
             style={{
                 textDecoration: 'none',
                 display: 'flex',
@@ -140,15 +228,18 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, variant = 'default' 
                 overflow: 'hidden',
                 position: 'relative'
             }}>
-                <div style={{
-                    width: '100%',
-                    height: '100%',
-                    backgroundImage: `url(${article.image_url || 'https://via.placeholder.com/600x400?text=No+Image'})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'top center',
-                    transition: 'transform 0.5s ease',
-                    transform: isHovered ? 'scale(1.1)' : 'scale(1)'
-                }} />
+                <Image
+                    src={article.image_url || 'https://via.placeholder.com/600x400?text=No+Image'}
+                    alt={article.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 400px"
+                    style={{
+                        objectFit: 'cover',
+                        transition: 'transform 0.5s ease',
+                        transform: isHovered ? 'scale(1.1)' : 'scale(1)'
+                    }}
+                    unoptimized={!!(article.image_url && article.image_url.includes('wsrv.nl'))}
+                />
                 <div style={{
                     position: 'absolute',
                     top: '12px',
@@ -160,7 +251,8 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, variant = 'default' 
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     color: 'white',
-                    border: '1px solid rgba(255,255,255,0.1)'
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    zIndex: 2
                 }}>
                     {article.category}
                 </div>

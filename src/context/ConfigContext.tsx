@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { MAIN_CATEGORIES } from '../constants';
 
@@ -45,31 +47,22 @@ const DEFAULT_SETTINGS: SiteSettings = {
 };
 
 export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [sections, setSections] = useState<SectionConfig[]>(() => {
+    const [sections, setSections] = useState<SectionConfig[]>(DEFAULT_SECTIONS);
+    const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
+
+    // Initial load from localStorage need to be in useEffect to avoid hydration mismatch
+    useEffect(() => {
         const stored = localStorage.getItem('filmospere_config');
         if (stored) {
             try {
                 const parsed = JSON.parse(stored);
-                if (parsed.sections) return parsed.sections;
+                if (parsed.sections) setSections(parsed.sections);
+                if (parsed.settings) setSettings(parsed.settings);
             } catch (e) {
                 console.error('Failed to parse config sections', e);
             }
         }
-        return DEFAULT_SECTIONS;
-    });
-
-    const [settings, setSettings] = useState<SiteSettings>(() => {
-        const stored = localStorage.getItem('filmospere_config');
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                if (parsed.settings) return parsed.settings;
-            } catch (e) {
-                console.error('Failed to parse config settings', e);
-            }
-        }
-        return DEFAULT_SETTINGS;
-    });
+    }, []);
 
     useEffect(() => {
         localStorage.setItem('filmospere_config', JSON.stringify({ sections, settings }));

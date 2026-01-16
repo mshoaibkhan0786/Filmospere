@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Movie, CastMember } from '../types';
 import { supabase } from '../lib/supabase';
@@ -174,9 +176,9 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                                     cachedSeenIds.add(m.id);
                                     cachedMovies.push({
                                         id: m.id,
-                                        title: m.title,
-                                        posterUrl: m.posterUrl,
-                                        rating: m.rating,
+                                        title: m.title || m.name || '',
+                                        posterUrl: m.posterUrl || '',
+                                        rating: m.rating || 0,
                                         releaseYear: m.releaseYear,
                                         duration: m.duration,
                                         tags: m.tags,
@@ -254,7 +256,7 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 // A. Base Popular (Top 50)
                 // A. Base Popular (Top 50)
                 const p1 = supabase.from('movies')
-                    .select('id, data->title, data->posterUrl, data->rating, data->releaseYear, data->slug, data->contentType, data->voteCount, data->tags, data->duration, data->description, data->backdropUrl')
+                    .select('id, data')
                     .not('data->>posterUrl', 'is', null)
                     .neq('data->>posterUrl', 'N/A')
                     .neq('data->>posterUrl', '')
@@ -264,21 +266,23 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 // B. Latest (Top 50)
                 // B. Latest (Top 50)
                 const p2 = supabase.from('movies')
-                    .select('id, data->title, data->posterUrl, data->rating, data->releaseYear, data->slug, data->contentType, data->voteCount, data->tags, data->duration, data->description, data->backdropUrl')
+                    .select('id, data')
                     .not('data->>posterUrl', 'is', null)
                     .neq('data->>posterUrl', 'N/A')
                     .neq('data->>posterUrl', '')
                     .order('data->releaseYear', { ascending: false })
+                    .order('data->voteCount', { ascending: false })
                     .limit(50);
 
                 // C. Series (Top 50)
                 // C. Series (Top 50)
                 const p3 = supabase.from('movies')
-                    .select('id, data->title, data->posterUrl, data->rating, data->releaseYear, data->slug, data->contentType, data->voteCount, data->tags, data->duration, data->description, data->backdropUrl')
+                    .select('id, data')
                     .eq('data->>contentType', 'series')
                     .not('data->>posterUrl', 'is', null)
                     .neq('data->>posterUrl', 'N/A')
                     .neq('data->>posterUrl', '')
+                    .order('data->voteCount', { ascending: false })
                     .limit(50);
 
                 // 3. Execute Core Fetch First (Parallel)
@@ -297,9 +301,9 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     rows.forEach(row => {
                         if (!seenIds.has(row.id)) {
                             seenIds.add(row.id);
-                            // Standard full movie object from data column
+                            const mData = row.data || {};
                             newMovies.push({
-                                ...row,
+                                ...mData,
                                 id: row.id
                             } as unknown as Movie);
                         }
@@ -854,15 +858,11 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const fetchMoviesByPerson = useCallback(async (id: string, start = 0, count = 40): Promise<{ movies: Movie[]; totalCount: number }> => {
         try {
             // Fetching by person
-
-            // 1. Identify Candidate IDs (Handle aliases like aaa-person, slugs like name-id, etc.)
             const candidateIds = new Set<string>([id]);
-            // Match last numeric part: "shah-rukh-khan-12345" -> "12345"
-            // Also handles "tmdb-person-12345" -> "12345"
             const match = id.match(/-(\d+)$/) || id.match(/^(\d+)$/);
             if (match) {
                 const numId = match[1];
-                candidateIds.add(`Number:${numId}`); // Marker for manual filter if needed, or:
+                candidateIds.add(`Number:${numId}`);
                 candidateIds.add(`aaa-person-${numId}`);
                 candidateIds.add(`tmdb-person-${numId}`);
                 candidateIds.add(`person-${numId}`);
@@ -870,11 +870,7 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 candidateIds.add(numId);
             }
 
-            // Filter out director IDs from this alias logic if they don't match pattern, 
-            // but keep the ID itself. 
-            // If strictly director:
             if (id.startsWith('director-')) {
-                // Director logic remains simple for now
                 const directorName = decodeURIComponent(id.replace('director-', ''));
                 const { data, count: total } = await supabase
                     .from('movies')
@@ -888,20 +884,6 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     totalCount: total || 0
                 };
             }
-
-            // 2. Optimized Fetch: Only query for the specific ID provided
-            // We have standardized on 'tmdb-person-' so we trust the input ID.
-            // Spawning 5 parallel queries for legacy aliases (aaa-, cast-, etc.) causes 500 errors (DB timeout).
-
-            // Assuming the DB stores IDs as 'tmdb-person-NUM' or just NUM?
-            // "contains" query needs to match exactly what is in the JSON.
-            // If DB has "tmdb-person-35742", checking "shah-rukh-khan-35742" fails.
-
-            // We'll search for the numeric ID if extracted, or rely on loose match if we can't tell.
-            // But 'contains' on JSON needs exact string match for array items.
-
-            // Revert to old behavior: if we found a numeric ID, check for standard variations.
-            // OR simpler: query for "tmdb-person-NUM" if we found a NUM.
 
             const targetId = match ? `tmdb-person-${match[1]}` : id;
             console.log(`[MovieContext] fetchMoviesByPerson: Input=${id}, Target=${targetId}`);
@@ -918,9 +900,8 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
             if (error) {
                 console.warn(`[MovieContext] Primary fetch failed for ${targetId}. Error:`, error);
-                console.log('[MovieContext] Attempting fallback text search...');
 
-                // Fallback Strategy: Text Search on JSON String (Slower but robust)
+                // Fallback Strategy
                 const fallbackQuery = supabase
                     .from('movies')
                     .select('*', { count: 'exact' })
@@ -942,9 +923,6 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const mergedMovies: Movie[] = data ? data.map(d => ({ ...d.data, id: d.id } as Movie)) : [];
             const estimatedTotal = total || 0;
 
-            // Skip the complexity of merging multiple result sets since we only have one now.
-            // The following logic for aliases is removed for performance.
-
             // 4. Update State
             setMovies(prev => {
                 const currentMap = new Map(prev.map(m => [m.id, m]));
@@ -958,12 +936,9 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 return changed ? Array.from(currentMap.values()) : prev;
             });
 
-            // Re-sort merged slice (even though DB sorted, merging ensures consistency if we had pagination)
             mergedMovies.sort((a, b) => (b.releaseYear || 0) - (a.releaseYear || 0));
 
             return { movies: mergedMovies, totalCount: estimatedTotal };
-
-
 
         } catch (e) {
             console.error(e);

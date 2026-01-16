@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
 import type { Movie, CastMember } from '../../types';

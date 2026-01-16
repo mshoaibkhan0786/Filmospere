@@ -1,30 +1,69 @@
+"use client";
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, ArrowLeft, Menu, X } from 'lucide-react';
 import { useConfig } from '../context/ConfigContext';
 import Logo from './Logo';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import MobileMenu from './MobileMenu';
 
 import './Navbar.css';
 
 interface NavbarProps {
-    onSearch: (query: string) => void;
+    onSearch?: (query: string) => void; // Optional in Next.js as we might handle search globally
     showBackArrow?: boolean;
     initialSearchTerm?: string;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initialSearchTerm = '' }) => {
     const { settings } = useConfig();
-    const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
+    // Initialize state with URL param if available, fallback to prop
+    const [searchTerm, setSearchTerm] = useState(searchParams?.get('search') || initialSearchTerm);
+
     const [isExpanded, setIsExpanded] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
-    const navigate = useNavigate();
-    const location = useLocation();
+    const ignoreParamsSync = useRef(false);
+
+    // Sync state with URL changes (e.g. Back button or reload)
+    useEffect(() => {
+        // If we deliberately cleared the search via UI, ignore the immediate strict sync
+        // until the URL actually updates to empty.
+        if (ignoreParamsSync.current) {
+            // Check if URL has actually caught up (became empty)
+            const query = searchParams?.get('search') || '';
+            if (!query) {
+                // Reset flag once we match the empty state we requested
+                ignoreParamsSync.current = false;
+            }
+            return;
+        }
+
+        const query = searchParams?.get('search') || '';
+        if (query !== searchTerm) {
+            setSearchTerm(query);
+            // Auto-expand if there is a query
+            if (query) {
+                setIsExpanded(true);
+            }
+        }
+    }, [searchParams]);
+
+    // ... (rest of component)
+
+    if (pathname.startsWith('/admin')) {
+        return null;
+    }
     const [isScrolled, setIsScrolled] = useState(false);
     const [isBackHovered, setIsBackHovered] = useState(false);
 
     useEffect(() => {
+        // Focus logic if initialSearchTerm provided (mostly legacy prop usage now)
         if (initialSearchTerm) {
             setIsExpanded(true);
             setTimeout(() => {
@@ -34,7 +73,7 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                 }
             }, 100);
         }
-    }, []); // Only run on mount to restore focus after navigation
+    }, [initialSearchTerm]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -47,10 +86,45 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchTerm(value);
-        onSearch(value);
+
+        if (onSearch) {
+            onSearch(value);
+        } else {
+            // Live Search Logic (Vite Parity)
+            // If query exists, route to /?search=...
+            // If empty, route to / (clearing search)
+            // Use replace to avoid history spam, or push? Vite used global search state + replace.
+            const targetPath = value.trim() ? `/?search=${encodeURIComponent(value)}` : '/';
+
+            // Only route if we are changing something relevant
+            router.replace(targetPath, { scroll: false });
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && searchTerm.trim()) {
+            setIsExpanded(false);
+            if (onSearch) {
+                // If parent handles search (e.g. live filter), let it do so.
+                // But for pure Next.js pages, we usually route. 
+                // Let's assume onSearch is for "Live Filter" scenarios if they exist.
+                // If we want global search, we ignore onSearch? 
+                // Let's support both: On Enter, if onSearch is defined, maybe we still route?
+                // Actually, let's just route if it's a global search intent.
+            } else {
+                router.push(`/?search=${encodeURIComponent(searchTerm.trim())}`);
+            }
+        }
     };
 
     const isSearchVisible = isExpanded || searchTerm;
+
+    // Auto-detect Back Arrow mode if not explicitly disabled
+    const shouldShowBackArrow = showBackArrow ||
+        pathname.startsWith('/movie/') ||
+        pathname.startsWith('/person/') ||
+        pathname.startsWith('/watch/') ||
+        (pathname.startsWith('/articles/') && pathname !== '/articles');
 
     return (
         <nav className="navbar">
@@ -60,22 +134,34 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                 <div className="navbar-left">
 
                     {/* Hamburger Menu (Mobile Only) */}
-                    {!showBackArrow && (
+                    {!shouldShowBackArrow && (
                         <div
                             className="mobile-menu-trigger mobile-menu-trigger-btn"
                             onClick={() => setIsMenuOpen(true)}
+                            role="button"
+                            aria-label="Toggle navigation menu"
+                            aria-expanded={isMenuOpen}
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsMenuOpen(true); }}
                         >
                             <Menu size={24} />
                         </div>
                     )}
 
-                    {showBackArrow ? (
+                    {shouldShowBackArrow ? (
                         <div
-                            className="back-arrow-btn"
-                            onClick={() => navigate(-1)}
+                            onClick={() => router.back()}
                             onMouseEnter={() => setIsBackHovered(true)}
                             onMouseLeave={() => setIsBackHovered(false)}
+                            role="button"
+                            aria-label="Go back to previous page"
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') router.back(); }}
                             style={{
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                transition: 'opacity 0.2s',
                                 opacity: isBackHovered ? 1 : (isScrolled ? 0.25 : 1)
                             }}
                         >
@@ -83,10 +169,10 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                         </div>
                     ) : (
                         <Link
-                            to="/"
+                            href="/"
                             className="navbar-logo-link"
                         >
-                            <Logo suffix={location.pathname === '/articles' ? 'Read' : undefined} />
+                            <Logo suffix={pathname === '/articles' ? 'Read' : undefined} />
                             {settings.siteName !== 'Filmospere' && (
                                 <span className="navbar-site-name">
                                     {settings.siteName}
@@ -100,26 +186,26 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                     {/* Desktop Menu Links (Hidden on Mobile) */}
                     <div className="nav-links desktop-only">
                         <Link
-                            to="/"
-                            className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
+                            href="/"
+                            className={`nav-link ${pathname === '/' ? 'active' : ''}`}
                         >
                             Home
                         </Link>
                         <Link
-                            to="/articles"
-                            className={`nav-link ${location.pathname.includes('articles') ? 'active' : ''}`}
+                            href="/articles"
+                            className={`nav-link ${pathname.includes('articles') ? 'active' : ''}`}
                         >
                             Articles
                         </Link>
                         <Link
-                            to="/section/Web%20Series"
-                            className={`nav-link ${location.pathname.includes('Web Series') ? 'active' : ''}`}
+                            href="/section/web-series"
+                            className={`nav-link ${pathname.includes('web-series') ? 'active' : ''}`}
                         >
                             Series
                         </Link>
                         <Link
-                            to="/section/Trending"
-                            className={`nav-link ${location.pathname.includes('Trending') ? 'active' : ''}`}
+                            href="/section/trending"
+                            className={`nav-link ${pathname.includes('trending') ? 'active' : ''}`}
                         >
                             Trending
                         </Link>
@@ -132,6 +218,10 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                                 setIsExpanded(true);
                                 setTimeout(() => inputRef.current?.focus(), 100);
                             }}
+                            role="button"
+                            aria-label="Open search"
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setIsExpanded(true); setTimeout(() => inputRef.current?.focus(), 100); } }}
                         >
                             <Search size={20} />
                         </div>
@@ -141,6 +231,7 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                             placeholder="Search movies..."
                             value={searchTerm}
                             onChange={handleSearch}
+                            onKeyDown={handleKeyDown}
                             onBlur={() => {
                                 if (!searchTerm) {
                                     setIsExpanded(false);
@@ -148,6 +239,7 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                             }}
                             name="search"
                             id="navbar-search"
+                            aria-label="Search movies"
                             className={`search-input ${isSearchVisible ? 'visible' : ''}`}
                         />
                         {/* Close/Clear Icon for Search (Mobile mostly) */}
@@ -155,9 +247,25 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                             <div
                                 className="search-close-btn"
                                 onClick={() => {
+                                    ignoreParamsSync.current = true; // Prevent useEffect from reverting this immediately
                                     setSearchTerm('');
-                                    onSearch('');
+                                    if (onSearch) {
+                                        onSearch('');
+                                    } else {
+                                        router.replace('/', { scroll: false });
+                                    }
                                     setIsExpanded(false);
+                                }}
+                                role="button"
+                                aria-label="Clear search"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        ignoreParamsSync.current = true;
+                                        setSearchTerm('');
+                                        if (onSearch) { onSearch(''); } else { router.replace('/', { scroll: false }); }
+                                        setIsExpanded(false);
+                                    }
                                 }}
                             >
                                 <X size={16} />

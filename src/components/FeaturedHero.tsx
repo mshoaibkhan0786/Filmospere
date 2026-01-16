@@ -1,17 +1,19 @@
+"use client";
+
 import React, { useState } from 'react';
-import { Play, Star, Info, X } from 'lucide-react'; // Added Info, X
-import { useNavigate } from 'react-router-dom';
+import { Play, Star, Info, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import type { Movie } from '../types';
 import { getOptimizedImageUrl } from '../utils/imageOptimizer';
 import { formatDuration } from '../utils/formatUtils';
-import { getYoutubeId } from '../utils/videoUtils'; // Added import
+import { getYoutubeId } from '../utils/videoUtils';
 
 interface FeaturedHeroProps {
     movie: Movie;
 }
 
 const FeaturedHero: React.FC<FeaturedHeroProps> = ({ movie }) => {
-    const navigate = useNavigate();
+    const router = useRouter();
     const [playingTrailerId, setPlayingTrailerId] = useState<string | null>(null);
 
     // Prefer the first image (Banner) if available, otherwise fallback to poster
@@ -25,7 +27,7 @@ const FeaturedHero: React.FC<FeaturedHeroProps> = ({ movie }) => {
                 return;
             }
         }
-        navigate(`/movie/${movie.id}`);
+        router.push(`/movie/${movie.id}`);
     };
 
     return (
@@ -78,9 +80,6 @@ const FeaturedHero: React.FC<FeaturedHeroProps> = ({ movie }) => {
                 paddingBottom: '15vh' // Ensure content is above the negative margin overlap
             }}>
                 <div style={{ maxWidth: '600px' }}>
-                    {/* Tag / Genre */}
-                    {/* Tag / Genre / Metadata */}
-
 
                     {/* Title */}
                     <h1 style={{
@@ -97,7 +96,7 @@ const FeaturedHero: React.FC<FeaturedHeroProps> = ({ movie }) => {
                         {movie.title}
                     </h1>
 
-                    {/* Tag / Genre / Metadata - Moved Below Title */}
+                    {/* Metadata */}
                     <div style={{
                         display: 'flex',
                         flexWrap: 'wrap',
@@ -159,15 +158,13 @@ const FeaturedHero: React.FC<FeaturedHeroProps> = ({ movie }) => {
                         </button>
 
                         <button
-                            onClick={() => navigate(`/movie/${movie.slug || movie.id}`)}
+                            onClick={() => router.push(`/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`)}
                             className="movie-hero-trailer-button"
                         >
                             <Info size={24} />
                             More Info
                         </button>
                     </div>
-
-
                 </div>
             </div>
             {playingTrailerId && (

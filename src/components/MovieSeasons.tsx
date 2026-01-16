@@ -1,5 +1,8 @@
+"use client";
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Play } from 'lucide-react';
+import Image from 'next/image';
 import { formatDuration, formatDate } from '../utils/formatUtils';
 import type { Season } from '../types';
 
@@ -163,7 +166,14 @@ const MovieSeasons: React.FC<MovieSeasonsProps> = ({ seasons }) => {
                                 position: 'relative'
                             }}>
                                 {episode.thumbnailUrl ? (
-                                    <img src={episode.thumbnailUrl} alt={episode.title || 'Episode'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <Image
+                                        src={episode.thumbnailUrl}
+                                        alt={episode.title || 'Episode'}
+                                        fill
+                                        sizes="(max-width: 768px) 120px, 160px"
+                                        style={{ objectFit: 'cover' }}
+                                        unoptimized={!!episode.thumbnailUrl.includes('wsrv.nl')}
+                                    />
                                 ) : (
                                     <div className="flex-center" style={{ width: '100%', height: '100%', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <Play size={32} />

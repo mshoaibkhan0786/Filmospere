@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { Plus, Trash2, Link as LinkIcon, ExternalLink } from 'lucide-react';
 import type { Movie, StreamingLink } from '../../types';

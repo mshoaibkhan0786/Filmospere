@@ -1,6 +1,9 @@
+"use client";
+
 import React, { useEffect } from 'react';
 import { X, ChevronRight, Home, Tv, Film, TrendingUp, FileText } from 'lucide-react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import Logo from './Logo';
 
 interface MobileMenuProps {
@@ -9,26 +12,21 @@ interface MobileMenuProps {
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    // Removed internal closing state - relying on parent state and CSS transitions
-    // because we will now keep the component mounted to allow exit animations.
+    const router = useRouter();
+    const pathname = usePathname();
 
     // Close on route change
     useEffect(() => {
         if (isOpen) {
             onClose();
         }
-    }, [location.pathname]);
-
-    // We no longer return null here. The component stays in DOM.
-    // CSS handles visibility/pointer-events.
+    }, [pathname]);
 
     const menuItems = [
         { label: 'Home', icon: Home, path: '/' },
         { label: 'Articles', icon: FileText, path: '/articles' },
         { label: 'Movies', icon: Film, path: '/section/Latest%20Movies%20%26%20Series' },
-        { label: 'TV Series', icon: Tv, path: '/section/Web%20Series' },
+        { label: 'TV Series', icon: Tv, path: '/section/web-series' },
         { label: 'Trending', icon: TrendingUp, path: '/section/Trending' },
     ];
 
@@ -98,6 +96,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                     <Logo />
                     <button
                         onClick={onClose}
+                        aria-label="Close navigation menu"
                         style={{
                             background: 'rgba(255,255,255,0.1)',
                             border: 'none',
@@ -124,12 +123,12 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem' }}>
                         {menuItems.map((item) => {
                             const Icon = item.icon;
-                            const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.includes(item.path));
+                            const isActive = pathname === item.path || (item.path !== '/' && pathname.includes(item.path));
 
                             return (
                                 <Link
                                     key={item.label}
-                                    to={item.path}
+                                    href={item.path}
                                     onClick={onClose}
                                     style={{
                                         display: 'flex',
@@ -172,7 +171,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                             {genres.map(genre => (
                                 <Link
                                     key={genre}
-                                    to={`/section/${genre}`}
+                                    href={`/section/${genre}`}
                                     onClick={onClose}
                                     style={{
                                         padding: '0.8rem 1rem',
@@ -202,13 +201,13 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                         gap: '1rem'
                     }}>
                         <div
-                            onClick={() => navigate('/about')}
+                            onClick={() => router.push('/about')}
                             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#888', fontSize: '0.9rem', cursor: 'pointer', padding: '0.5rem' }}
                         >
                             About Filmospere <ChevronRight size={16} />
                         </div>
                         <div
-                            onClick={() => navigate('/contact')}
+                            onClick={() => router.push('/contact')}
                             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#888', fontSize: '0.9rem', cursor: 'pointer', padding: '0.5rem' }}
                         >
                             Contact Us <ChevronRight size={16} />

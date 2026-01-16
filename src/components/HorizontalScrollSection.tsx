@@ -1,9 +1,11 @@
+"use client";
+
 import React, { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import MovieCard from './MovieCard';
 import MovieCardSkeleton from './MovieCardSkeleton';
 import type { Movie } from '../types';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 
 interface HorizontalScrollSectionProps {
     title: string;
@@ -15,7 +17,7 @@ interface HorizontalScrollSectionProps {
 
 const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title, data, loading = false, linkTo, onEndReached }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const navigate = useNavigate();
+    const router = useRouter();
     const [showLeftButton, setShowLeftButton] = useState(false);
     const [showRightButton, setShowRightButton] = useState(true);
     const [isScrollable, setIsScrollable] = useState(false);
@@ -36,8 +38,6 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title
             }
 
             setShowLeftButton(scrollLeft > 0);
-            // Allow a small tolerance (e.g. 1px) for float calculation errors
-            // Allow a small tolerance (e.g. 1px) for float calculation errors
             const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 10;
             setShowRightButton(!isAtEnd);
 
@@ -64,6 +64,8 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title
         };
     }, [data, loading]);
 
+
+
     const scroll = (direction: 'left' | 'right') => {
         if (scrollContainerRef.current) {
             const { clientWidth } = scrollContainerRef.current;
@@ -82,7 +84,7 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title
         <div className="section-container" style={{ position: 'relative', marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h2
-                    onClick={() => !loading && linkTo && navigate(linkTo)}
+                    onClick={() => !loading && linkTo && router.push(linkTo)}
                     style={{
                         fontSize: '1.8rem',
                         fontWeight: 'bold',
@@ -166,7 +168,7 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title
                                     <div key={movie.id} className="horizontal-scroll-card">
                                         <MovieCard
                                             movie={movie}
-                                            onClick={(movie) => navigate(`/movie/${movie.slug || movie.id}`)}
+                                            onClick={(movie) => router.push(`/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`)}
                                             priority={i < 5} // Eager load first 5 visible items
                                         />
                                     </div>
@@ -178,26 +180,6 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title
 
                 <div className="section-mobile-layout">
                     {(() => {
-                        // Logic: Initially show 6 items. When scrolling right, load more.
-                        // Actually, purely CSS keying isn't enough for "fetch/load".
-                        // We need state for visibleCount.
-                        // But horizontal scroll is hard to detect via just one listener if using native scroll.
-                        // We'll render ALL data but rely on browser optimization?
-                        // No, User specifically asked for "load more" logic.
-
-                        // Wait, for horizontal scroll in React without virtualization, rendering 50 items is fine.
-                        // But to satisfy "initially load 6-7", maybe we just render them all?
-                        // The user said "initially we only load 6-7... if user scrolls... fetch more".
-                        // This implies network fetch OR DOM rendering.
-                        // Since we have the pool in memory (passed as 'data'), we just control slice.
-
-                        // We need state for 'limit'.
-                        // And scroll listener on the container.
-
-                        // const MAX_VISIBLE = 25;
-                        // const INCREMENT = 5;
-
-                        // Mobile 2-row layout
                         const visibleData = data.slice(0, visibleCount);
                         const mid = Math.ceil(visibleData.length / 2); // Split evenly across 2 rows
                         const row1 = visibleData.slice(0, mid);
@@ -221,7 +203,7 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title
                                                 <MovieCard
                                                     movie={movie}
                                                     onClick={(movie) => {
-                                                        navigate(`/movie/${movie.slug || movie.id}`);
+                                                        router.push(`/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`);
                                                     }}
                                                 />
                                             </div>
@@ -240,7 +222,7 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title
                                             <div key={movie.id} className="horizontal-scroll-card">
                                                 <MovieCard
                                                     movie={movie}
-                                                    onClick={(movie) => navigate(`/movie/${movie.slug || movie.id}`)}
+                                                    onClick={(movie) => router.push(`/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`)}
                                                 />
                                             </div>
                                         ))
@@ -278,9 +260,23 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title
                     </button>
                 )}
             </div>
-            <style>{`
+            <style jsx>{`
                 .horizontal-scroll-layout::-webkit-scrollbar {
                     display: none;
+                }
+                .section-mobile-layout {
+                    display: none;
+                }
+                .section-desktop-layout {
+                    display: block;
+                }
+                @media (max-width: 768px) {
+                    .section-mobile-layout {
+                        display: block;
+                    }
+                    .section-desktop-layout {
+                        display: none;
+                    }
                 }
             `}</style>
         </div>

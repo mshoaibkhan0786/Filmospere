@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import type { Video } from '../types';
@@ -40,10 +42,16 @@ const MovieVideos: React.FC<MovieVideosProps> = ({ videos, trailerUrl, posterUrl
         allVideos.push(...distinctVideos);
     }
 
+    const [isHovering, setIsHovering] = React.useState(false);
+
     if (allVideos.length === 0) return null;
 
     return (
-        <div style={{ position: 'relative' }}>
+        <div
+            style={{ position: 'relative' }}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+        >
             <div style={{ marginBottom: '1rem' }}>
                 <h2 style={{
                     fontSize: '1.8rem',
@@ -56,7 +64,7 @@ const MovieVideos: React.FC<MovieVideosProps> = ({ videos, trailerUrl, posterUrl
                 </h2>
             </div>
 
-            {allVideos.length > 3 && (
+            {allVideos.length > 3 && isHovering && (
                 <button
                     onClick={() => scroll('left')}
                     style={{
@@ -74,7 +82,17 @@ const MovieVideos: React.FC<MovieVideosProps> = ({ videos, trailerUrl, posterUrl
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        color: 'white'
+                        color: 'white',
+                        transition: 'all 0.2s',
+                        backdropFilter: 'blur(4px)'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'white';
+                        e.currentTarget.style.color = 'black';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                        e.currentTarget.style.color = 'white';
                     }}
                 >
                     <ChevronLeft size={24} />
@@ -184,7 +202,7 @@ const MovieVideos: React.FC<MovieVideosProps> = ({ videos, trailerUrl, posterUrl
                 })}
             </div>
 
-            {allVideos.length > 3 && (
+            {allVideos.length > 3 && isHovering && (
                 <button
                     onClick={() => scroll('right')}
                     style={{
@@ -202,7 +220,17 @@ const MovieVideos: React.FC<MovieVideosProps> = ({ videos, trailerUrl, posterUrl
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        color: 'white'
+                        color: 'white',
+                        transition: 'all 0.2s',
+                        backdropFilter: 'blur(4px)'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'white';
+                        e.currentTarget.style.color = 'black';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                        e.currentTarget.style.color = 'white';
                     }}
                 >
                     <ChevronRight size={24} />

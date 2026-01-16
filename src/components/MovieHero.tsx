@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useRef } from 'react';
 import { Play, Star, MonitorPlay, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Movie } from '../types';
@@ -186,8 +188,6 @@ const MovieHero: React.FC<MovieHeroProps> = ({ movie, onPlayClick }) => {
                     <h1 className="movie-hero-title" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9)' }}>
                         {movie.title}
                     </h1>
-
-
 
                     {/* Metadata Row */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', color: '#e5e5e5', fontSize: '1.1rem', fontWeight: 500, textShadow: '1px 1px 3px rgba(0,0,0,0.9)' }}>
