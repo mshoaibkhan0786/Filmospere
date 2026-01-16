@@ -1,7 +1,7 @@
 import React from 'react';
 import { getHomeData } from '@/lib/api';
 import HomeClient from '@/components/HomeClient';
-import HeroSkeleton from '@/components/HeroSkeleton';
+import HomeSkeleton from '@/components/HomeSkeleton';
 
 export const revalidate = 3600;
 
@@ -14,7 +14,7 @@ export default async function Home() {
   const { movies, sections } = await getHomeData();
 
   return (
-    <React.Suspense fallback={<HeroSkeleton />}>
+    <React.Suspense fallback={<HomeSkeleton />}>
       <HomeClient
         initialMovies={movies || []}
         initialSections={sections || []}
