@@ -114,7 +114,9 @@ export const getHomeData = async (): Promise<{ movies: Movie[], sections: any[] 
     }
 };
 
-export const getMovieById = async (rawId: string): Promise<Movie | null> => {
+import { cache } from 'react';
+
+export const getMovieById = cache(async (rawId: string): Promise<Movie | null> => {
     // console.log('debug: getMovieById called with:', rawId);
     try {
         const id = decodeURIComponent(rawId).trim();
@@ -126,8 +128,7 @@ export const getMovieById = async (rawId: string): Promise<Movie | null> => {
             .eq('data->>slug', id)
             .maybeSingle();
 
-        // 2. Try ID Match (Only if it looks like a UUID or short ID, optional but good for perf)
-        // Only try if no strings that obviously aren't IDs are present
+        // 2. Try ID Match (Only if it looks like a numeric ID or UUID)
         if (!data && !id.includes(' ')) {
             const { data: idData } = await supabase
                 .from('movies')
@@ -138,14 +139,12 @@ export const getMovieById = async (rawId: string): Promise<Movie | null> => {
         }
 
         // 3. Fallback: Normalize Slug (Spaces -> Hyphens)
-        // Logic: Lowercase -> Remove Colons -> Replace Spaces with Hyphens -> Remove any other chars
         if (!data) {
             const normalized = id.toLowerCase()
                 .replace(/:/g, '')
                 .replace(/ /g, '-')
                 .replace(/[^a-z0-9-]/g, '');
 
-            // console.log('debug: Trying normalized slug:', normalized);
             const { data: normData } = await supabase
                 .from('movies')
                 .select('*')
@@ -157,9 +156,38 @@ export const getMovieById = async (rawId: string): Promise<Movie | null> => {
             }
         }
 
-        // 4. Fallback: Fuzzy Title Match
+        // 4. ROBUST FALLBACK: URL usually has Year (e.g. "movie-title-2024") but DB might not
         if (!data) {
-            // Use plain string logic to match title roughly if slug logic failed
+            // Check if it ends with year pattern
+            const yearMatch = id.match(/-(19|20)\d{2}$/);
+            if (yearMatch) {
+                const cleanSlug = id.substring(0, yearMatch.index);
+                console.log(`[getMovieById] Trying stripped year slug: ${cleanSlug}`);
+                const { data: cleanData } = await supabase
+                    .from('movies')
+                    .select('*')
+                    .eq('data->>slug', cleanSlug)
+                    .maybeSingle();
+
+                if (cleanData) data = cleanData;
+            }
+        }
+
+        // 5. Fallback: Smarter Title Match (Hyphens -> Spaces)
+        // Ensure "she-rides-shotgun" matches "She Rides Shotgun"
+        if (!data) {
+            const spacedTitle = id.replace(/-/g, ' ');
+            const { data: titleData } = await supabase
+                .from('movies')
+                .select('*')
+                .ilike('data->>title', spacedTitle)
+                .maybeSingle();
+
+            if (titleData) data = titleData;
+        }
+
+        // 6. Original Fuzzy Title Match (Last Resort DB)
+        if (!data) {
             const { data: titleData } = await supabase
                 .from('movies')
                 .select('*')
@@ -168,6 +196,47 @@ export const getMovieById = async (rawId: string): Promise<Movie | null> => {
 
             if (titleData) {
                 data = titleData;
+            }
+        }
+
+        // 7. SERVER-SIDE JSON FILE FALLBACK (Critical for Stability)
+        // If DB fails or returns nothing, check local files (public/movies_partX.json)
+        // This mimics the client-side backup logic but ensures SSR doesn't 404.
+        if (!data) {
+            console.warn(`[getMovieById] DB lookup failed for '${id}'. Attempting local JSON fallback...`);
+            try {
+                const fs = await import('fs');
+                const path = await import('path');
+
+                // Check all 3 parts
+                for (let i = 1; i <= 3; i++) {
+                    const filePath = path.join(process.cwd(), 'public', `movies_part${i}.json`);
+                    if (fs.existsSync(filePath)) {
+                        const fileContent = fs.readFileSync(filePath, 'utf-8');
+                        const movies = JSON.parse(fileContent);
+
+                        // Search in this chunk
+                        // Try exact slug, ID, or fuzzy title
+                        const found = movies.find((m: any) =>
+                            (m.slug === id) ||
+                            (m.id === id) ||
+                            (m.slug === id.toLowerCase().replace(/ /g, '-')) ||
+                            (m.title && m.title.toLowerCase() === id.replace(/-/g, ' ').toLowerCase())
+                        );
+
+                        if (found) {
+                            console.log(`[getMovieById] Found in local backup (part${i}): ${found.title}`);
+                            // Mock the DB response structure
+                            data = {
+                                id: found.id || id, // Ensure ID exists
+                                data: found
+                            };
+                            break; // Stop looking
+                        }
+                    }
+                }
+            } catch (fsErr) {
+                console.error('[getMovieById] Local file fallback failed:', fsErr);
             }
         }
 
@@ -189,7 +258,7 @@ export const getMovieById = async (rawId: string): Promise<Movie | null> => {
         console.error('getMovieById failed:', e);
         return null;
     }
-};
+});
 
 export const getArticlesByMovieId = async (movieId: string): Promise<any[]> => {
     try {

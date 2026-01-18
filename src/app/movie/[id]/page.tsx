@@ -76,8 +76,8 @@ export default async function MoviePage({ params }: Props) {
         getRecommendations(movie),
         getArticlesByMovieId(movie.id),
         genreTag ? getMoviesByTag(genreTag) : Promise.resolve([]),
-        cast1 ? getMoviesByPersonId(cast1.name) : Promise.resolve([]),
-        cast2 ? getMoviesByPersonId(cast2.name) : Promise.resolve([]),
+        cast1 ? getMoviesByPersonId(cast1.id) : Promise.resolve([]),
+        cast2 ? getMoviesByPersonId(cast2.id) : Promise.resolve([]),
         industryTag ? getMoviesByTag(industryTag) : Promise.resolve([])
     ]);
 
