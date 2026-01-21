@@ -44,7 +44,10 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
     'Marathi': 'Popular movies in the Marathi language.',
     'Web Series': 'Binge-worthy episodic content across various genres.',
     'Latest Movies & Series': 'The newest releases fresh on the platform.',
-    'Trending': 'What everyone is watching right now.'
+    'Trending': 'What everyone is watching right now.',
+    'Top Rated': 'The highest-rated movies and series of all time, ranked by our community and global scores.',
+    'New Releases': 'The latest blockbusters and fresh episodes. Be the first to watch the newest content.',
+    'Science Fiction': 'Futuristic concepts, advanced technology, and space exploration.'
 };
 
 export default async function Layout({
@@ -58,11 +61,12 @@ export default async function Layout({
     const decodedCategory = decodeURIComponent(category);
     const displayTitle = decodedCategory === 'web-series' ? 'Web Series' : decodedCategory;
 
-    // Normalize title to match descriptions
-    const matchedKey = Object.keys(SECTION_DESCRIPTIONS).find(k => k.toLowerCase() === displayTitle.toLowerCase());
+    // Normalize title to match descriptions (Handle hyphens: top-rated -> top rated)
+    const normalizedTitle = displayTitle.replace(/-/g, ' ');
+    const matchedKey = Object.keys(SECTION_DESCRIPTIONS).find(k => k.toLowerCase() === normalizedTitle.toLowerCase());
 
     // Ensure display title is capitalized correctly based on our map
-    const finalTitle = matchedKey || displayTitle;
+    const finalTitle = matchedKey || (normalizedTitle.charAt(0).toUpperCase() + normalizedTitle.slice(1));
     const description = SECTION_DESCRIPTIONS[finalTitle] || (matchedKey ? SECTION_DESCRIPTIONS[matchedKey] : '');
 
     return (

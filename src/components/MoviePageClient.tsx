@@ -33,9 +33,10 @@ interface MoviePageClientProps {
         data: Movie[];
         linkTo?: string;
     }[];
+    children?: React.ReactNode;
 }
 
-const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendations, articles, extraSections = [] }) => {
+const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendations, articles, extraSections = [], children }) => {
     const router = useRouter();
     const [playingTrailerUrl, setPlayingTrailerUrl] = useState<string | null>(null);
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
@@ -601,25 +602,34 @@ const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendation
                     </div>
                 </div>
 
-                {/* --- BOTTOM SECTIONS --- */}
+
+                {/* --- BOTTOM SECTIONS (Streaming Slot) --- */}
                 <div className="movie-bottom-sections" style={{ marginTop: '2rem' }}>
 
-                    <div style={{ marginTop: (movie.whyWatch && movie.whyWatch.length > 0) ? '2rem' : '0', marginBottom: '1.5rem' }}>
-                        {recommendations.length > 0 && (
-                            <HorizontalScrollSection title="You May Also Like" data={recommendations} linkTo="#" />
-                        )}
-                    </div>
+                    {/* Render Children (Server Component Stream) if provided */}
+                    {children ? (
+                        children
+                    ) : (
+                        // FALLBACK for legacy or direct usage
+                        <>
+                            <div style={{ marginTop: (movie.whyWatch && movie.whyWatch.length > 0) ? '2rem' : '0', marginBottom: '1.5rem' }}>
+                                {recommendations.length > 0 && (
+                                    <HorizontalScrollSection title="You May Also Like" data={recommendations} linkTo="#" />
+                                )}
+                            </div>
 
-                    {/* Dynamic Extra Sections (Genre, Cast, Industry) */}
-                    {extraSections.map((section, index) => (
-                        <div key={index} style={{ marginTop: '3rem', marginBottom: '1.5rem' }}>
-                            <HorizontalScrollSection
-                                title={section.title}
-                                data={section.data}
-                                linkTo={section.linkTo}
-                            />
-                        </div>
-                    ))}
+                            {/* Dynamic Extra Sections (Genre, Cast, Industry) */}
+                            {extraSections.map((section, index) => (
+                                <div key={index} style={{ marginTop: '3rem', marginBottom: '1.5rem' }}>
+                                    <HorizontalScrollSection
+                                        title={section.title}
+                                        data={section.data}
+                                        linkTo={section.linkTo}
+                                    />
+                                </div>
+                            ))}
+                        </>
+                    )}
 
 
                     {/* Gallery Section */}

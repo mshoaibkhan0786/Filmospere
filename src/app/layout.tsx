@@ -42,6 +42,9 @@ export const metadata: Metadata = {
     title: "Filmospere - Discover Movies, Web Series & Anime",
     description: "Your ultimate destination for movies, web series, and entertainment.",
     creator: "@Filmospere", // Placeholder handle
+  },
+  other: {
+    "p:domain_verify": "17acd70aa3b8f4ec55ee795b81e45c2d"
   }
 };
 

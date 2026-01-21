@@ -16,9 +16,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     let displayTitle = decodedCategory;
     if (decodedCategory === 'web-series' || decodedCategory === 'series') {
         displayTitle = 'Web Series';
+    } else if (decodedCategory === 'top-rated') {
+        displayTitle = 'Top Rated';
+    } else if (decodedCategory === 'new-releases') {
+        displayTitle = 'New Releases';
+    } else if (decodedCategory === 'sci-fi') {
+        displayTitle = 'Sci-Fi';
     } else {
-        // Simple Title Case for single words (action -> Action)
-        // If it's multi-word, this might need more robust logic, but for now single word genres are standard.
         displayTitle = decodedCategory.charAt(0).toUpperCase() + decodedCategory.slice(1).toLowerCase();
     }
 
@@ -56,6 +60,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
 }
 
+// Enable ISR with 30-day cache
+export const revalidate = 2592000;
+export const dynamicParams = true; // Allow other params to be generated on demand
+
+export async function generateStaticParams() {
+    const sections = [
+        'trending',
+        'top-rated',
+        'new-releases',
+        'action',
+        'comedy',
+        'horror',
+        'science-fiction',
+        'thriller',
+        'romance',
+        'web-series',
+        'hollywood',
+        'bollywood',
+        'south-indian',
+        'anime'
+    ];
+
+    return sections.map((category) => ({
+        category: category,
+    }));
+}
+
 export default async function SectionPage({ params }: Props) {
     const { category } = await params;
     const decodedCategory = decodeURIComponent(category);
@@ -65,7 +96,28 @@ export default async function SectionPage({ params }: Props) {
         redirect(`/section/${decodedCategory.toLowerCase()}`);
     }
 
-    const displayTitle = decodedCategory === 'web-series' ? 'Web Series' : decodedCategory;
+    // Redirect 'sci-fi' to 'science-fiction' (User preference for this URL)
+    if (decodedCategory === 'sci-fi') {
+        redirect('/section/science-fiction');
+    }
+
+    // Redirect 'series' to 'web-series' (User request to remove duplicate)
+    if (decodedCategory === 'series') {
+        redirect('/section/web-series');
+    }
+
+    let displayTitle = decodedCategory;
+    if (decodedCategory === 'web-series' || decodedCategory === 'series') {
+        displayTitle = 'Web Series';
+    } else if (decodedCategory === 'top-rated') {
+        displayTitle = 'Top Rated';
+    } else if (decodedCategory === 'new-releases') {
+        displayTitle = 'New Releases';
+    } else if (decodedCategory === 'sci-fi') {
+        displayTitle = 'Sci-Fi';
+    } else {
+        displayTitle = decodedCategory.charAt(0).toUpperCase() + decodedCategory.slice(1).toLowerCase(); // Fallback
+    }
 
     // Fetch Initial Data (Server Side)
     // We pass this initial data to the client component to hydrate the state

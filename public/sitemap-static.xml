@@ -2,73 +2,121 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://filmospere.com</loc>
-    <lastmod>2026-01-16T15:13:44.585Z</lastmod>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://filmospere.com/section/trending</loc>
-    <lastmod>2026-01-16T15:13:44.598Z</lastmod>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://filmospere.com/section/web%20series</loc>
-    <lastmod>2026-01-16T15:13:44.598Z</lastmod>
+    <loc>https://filmospere.com/section/web-series</loc>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://filmospere.com/section/hollywood</loc>
-    <lastmod>2026-01-16T15:13:44.598Z</lastmod>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://filmospere.com/section/bollywood</loc>
-    <lastmod>2026-01-16T15:13:44.598Z</lastmod>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://filmospere.com/section/south%20indian</loc>
-    <lastmod>2026-01-16T15:13:44.598Z</lastmod>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://filmospere.com/section/anime</loc>
-    <lastmod>2026-01-16T15:13:44.598Z</lastmod>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://filmospere.com/section/top-rated</loc>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://filmospere.com/section/new-releases</loc>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://filmospere.com/section/science-fiction</loc>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://filmospere.com/section/action</loc>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://filmospere.com/section/comedy</loc>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://filmospere.com/section/horror</loc>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://filmospere.com/section/thriller</loc>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://filmospere.com/section/romance</loc>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://filmospere.com/articles</loc>
-    <lastmod>2026-01-16T15:13:44.598Z</lastmod>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://filmospere.com/about</loc>
-    <lastmod>2026-01-16T15:13:44.598Z</lastmod>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://filmospere.com/contact</loc>
-    <lastmod>2026-01-16T15:13:44.598Z</lastmod>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://filmospere.com/privacy</loc>
-    <lastmod>2026-01-16T15:13:44.598Z</lastmod>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://filmospere.com/terms</loc>
-    <lastmod>2026-01-16T15:13:44.598Z</lastmod>
+    <lastmod>2026-01-19T15:00:00.000Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>

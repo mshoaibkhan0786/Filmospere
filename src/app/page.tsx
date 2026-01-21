@@ -3,7 +3,7 @@ import { getHomeData } from '@/lib/api';
 import HomeClient from '@/components/HomeClient';
 import PageSkeleton from '@/components/PageSkeleton';
 
-export const revalidate = 3600;
+export const revalidate = 2592000; // 30 Days
 
 // Server Component for Initial Data Patching
 export default async function Home() {

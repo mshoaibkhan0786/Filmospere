@@ -80,6 +80,8 @@ export interface Movie extends PartialMovie {
     director: string;
     creator?: string;
     voteCount: number;
+    popularity?: number;
+    certification?: string; // e.g., 'R', 'PG-13', '18+'
     views: number;
     hiddenTags?: string[];
     cast: CastMember[];

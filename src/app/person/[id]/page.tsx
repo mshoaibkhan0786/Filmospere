@@ -8,6 +8,9 @@ type Props = {
     params: Promise<{ id: string }>
 };
 
+// Enable ISR with 30-day cache
+export const revalidate = 2592000;
+
 // SEO Metadata Generator
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     try {

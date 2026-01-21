@@ -150,13 +150,30 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
 
                     {shouldShowBackArrow ? (
                         <div
-                            onClick={() => router.back()}
+                            onClick={() => {
+                                // Smart Back Logic:
+                                // If history has more than 1 entry, go back.
+                                // Otherwise (direct entry), go to Home.
+                                if (window.history.length > 1 && document.referrer.includes(window.location.host)) {
+                                    router.back();
+                                } else {
+                                    router.push('/');
+                                }
+                            }}
                             onMouseEnter={() => setIsBackHovered(true)}
                             onMouseLeave={() => setIsBackHovered(false)}
                             role="button"
-                            aria-label="Go back to previous page"
+                            aria-label="Go back"
                             tabIndex={0}
-                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') router.back(); }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    if (window.history.length > 1 && document.referrer.includes(window.location.host)) {
+                                        router.back();
+                                    } else {
+                                        router.push('/');
+                                    }
+                                }
+                            }}
                             style={{
                                 cursor: 'pointer',
                                 display: 'flex',

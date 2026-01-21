@@ -1,14 +1,18 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getMovieById, getRecommendations, getArticlesByMovieId, getMoviesByTag, getMoviesByPersonId } from '../../../lib/api';
+import { Suspense } from 'react';
+import { getMovieById, getArticlesByMovieId } from '../../../lib/api';
 import MoviePageClient from '../../../components/MoviePageClient';
-import { isValidContent } from '../../../utils/formatUtils';
+import MovieRelatedSections from '../../../components/MovieRelatedSections';
+import RelatedSectionsSkeleton from '../../../components/RelatedSectionsSkeleton';
 
 type Props = {
     params: Promise<{ id: string }>
 };
 
-// SEO Metadata Generator
+// Enable ISR with 30-day cache
+export const revalidate = 2592000;
+
 // SEO Metadata Generator
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     try {
@@ -25,9 +29,55 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         const description = movie.metaDescription || movie.description || `Watch ${movie.title} on Filmosphere.`;
         const image = movie.backdropUrl || movie.posterUrl || '/filmospere-social.png'; // Fallback to a default image if needed
 
+        // Manual Content Moderation
+        // 1. MATURE CONTENT (Rated 18+, Erotica, Sensitive Themes)
+        // Strategy: Allow Indexing (to keep traffic) but label as Mature to avoid SafeSearch penalties.
+        const MATURE_SLUGS = [
+            'ggs-ganteng-ganteng-sange-2023',
+            'when-a-hot-night-opens-2-2021',
+            'what-fun-we-were-having-4-stories-about-date-rape-2011',
+            'ang-daigdig-ay-isang-butil-na-luha-1986',
+            'the-illusioned-ones-2025',
+            'ligaw-2025',
+            'the-shameful-secret-of-a-good-boy-1976',
+            'last-exit-to-brooklyn-1989',
+            'gloomy-sunday-1999'
+        ];
+
+        // Certification-based Auto-Tagging
+        // e.g. 'R', 'NC-17', '18+', 'TV-MA' (if strictly adult content is expected in TV-MA)
+        // Note: TV-MA is broad, so we might exclude it to avoid over-flagging standard shows like 'The Boys'.
+        // We focus on explicit adult ratings.
+        const MATURE_CERTIFICATIONS = ['NC-17', '18+', 'R21', 'R18'];
+        // Note: 'R' is usually safe for general index (e.g. Deadpool), so we don't force 'mature' meta for all 'R'.
+        // We rely on the specific slug list + 'NC-17'/'18+' for the heavy stuff.
+
+        const isCertifiedMature = movie.certification && MATURE_CERTIFICATIONS.some(c => movie.certification?.toUpperCase().includes(c));
+
+        const isMature = MATURE_SLUGS.includes(id)
+            || (movie.slug && MATURE_SLUGS.includes(movie.slug))
+            || isCertifiedMature;
+
+        // 2. STRICTLY RESTRICTED (Illegal, Harmful, DMCA takedowns)
+        // Strategy: NoIndex completely.
+        const RESTRICTED_SLUGS: string[] = []; // Currently empty as user wants traffic for previous items
+        const isRestricted = RESTRICTED_SLUGS.includes(id) || (movie.slug && RESTRICTED_SLUGS.includes(movie.slug));
+
         return {
             title,
             description,
+            robots: {
+                index: !isRestricted, // Allow indexing for Mature, block for Restricted
+                follow: !isRestricted,
+            },
+            // Add Mature Tags if applicable
+            ...(isMature ? {
+                other: {
+                    rating: 'mature',
+                    audience: 'Mature',
+                    googlebot: 'index, noimageindex' // Optional safety: Index text but maybe not images if risqué
+                }
+            } : {}),
             keywords: movie.keywords?.split(',').map(k => k.trim()) || [],
             openGraph: {
                 title: movie.metaTitle || `${movie.title} (${movie.releaseYear})`,
@@ -52,108 +102,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MoviePage({ params }: Props) {
     const { id } = await params;
-    const movie = await getMovieById(id);
+
+    // 1. Fetch Critical Data (Blocking)
+    // Only fetch the main movie details + sidebar articles. 
+    // This allows the page to paint "Above the Fold" content (Hero, Info) instantly.
+    const [movie, articles] = await Promise.all([
+        getMovieById(id),
+        getArticlesByMovieId(id)
+    ]);
 
     if (!movie) {
         notFound();
     }
 
-    // Identify Keys for related content
-    const genreTag = movie.tags && movie.tags.length > 0 ? movie.tags[0] : null;
-    const cast1 = movie.cast && movie.cast.length > 0 ? movie.cast[0] : null;
-    const cast2 = movie.cast && movie.cast.length > 1 ? movie.cast[1] : null;
-
-    const INDUSTRIES = [
-        'Bollywood', 'Tollywood', 'Kollywood', 'Mollywood', 'Sandalwood',
-        'Hollywood', 'Pollywood', 'Bengali Cinema', 'Marathi Cinema',
-        'K-Drama', 'Anime', 'Chinese Cinema'
-    ];
-    const industryTag = movie.tags?.find(t => INDUSTRIES.includes(t)) || null;
-
-    // Parallel fetch for related data
-    // structure: [recommendations, articles, genreMovies, cast1Movies, cast2Movies, industryMovies]
-    const [recommendations, articles, genreMovies, cast1Movies, cast2Movies, industryMovies] = await Promise.all([
-        getRecommendations(movie),
-        getArticlesByMovieId(movie.id),
-        genreTag ? getMoviesByTag(genreTag) : Promise.resolve([]),
-        cast1 ? getMoviesByPersonId(cast1.id) : Promise.resolve([]),
-        cast2 ? getMoviesByPersonId(cast2.id) : Promise.resolve([]),
-        industryTag ? getMoviesByTag(industryTag) : Promise.resolve([])
-    ]);
-
-    console.log('[Movie Page Server] recommendations count:', recommendations.length);
-    console.log('[Movie Page Server] recommendations sample:', recommendations.slice(0, 2).map(r => r.title));
-
-    // Construct Sections Data to pass to client
-    const extraSections = [];
-
-    // 1. More [Genre]
-    if (genreMovies.length > 0) {
-        const filtered = genreMovies.filter(m => m.id !== movie.id && isValidContent(m)).slice(0, 10);
-        if (filtered.length > 0) {
-            extraSections.push({
-                title: `More ${genreTag} Movies`,
-                data: filtered,
-                linkTo: `/section/${encodeURIComponent(genreTag!)}`
-            });
-        }
-    }
-
-    // 2. Starring [Cast 1]
-    if (cast1Movies.length > 0 && cast1) {
-        const filtered = cast1Movies.filter(m => m.id !== movie.id && isValidContent(m)).slice(0, 10);
-        if (filtered.length > 0) {
-            extraSections.push({
-                title: `Starring ${cast1.name}`,
-                data: filtered,
-                linkTo: `/person/${encodeURIComponent(cast1.name)}` // Simple search link for now
-            });
-        }
-    }
-
-    // 3. Starring [Cast 2]
-    if (cast2Movies.length > 0 && cast2) {
-        const filtered = cast2Movies.filter(m => m.id !== movie.id && isValidContent(m)).slice(0, 10);
-        if (filtered.length > 0) {
-            extraSections.push({
-                title: `Starring ${cast2.name}`,
-                data: filtered,
-                linkTo: `/person/${encodeURIComponent(cast2.name)}`
-            });
-        }
-    }
-
-    // 4. More from [Industry]
-    if (industryMovies.length > 0 && industryTag) {
-        const filtered = industryMovies.filter(m => m.id !== movie.id && isValidContent(m)).slice(0, 10);
-        if (filtered.length > 0) {
-            extraSections.push({
-                title: `More from ${industryTag}`,
-                data: filtered,
-                linkTo: `/section/${encodeURIComponent(industryTag)}`
-            });
-        }
-    }
-
-    console.log('[Movie Page Server] Fetched data counts:', {
-        genreMovies: genreMovies.length,
-        cast1Movies: cast1Movies.length,
-        cast2Movies: cast2Movies.length,
-        industryMovies: industryMovies.length,
-        extraSections: extraSections.length
-    });
-
-    console.log('[Movie Page Server] extraSections:', extraSections.map((s: any) => ({
-        title: s.title,
-        dataCount: s.data.length
-    })));
-
     return (
         <MoviePageClient
             movie={movie}
-            recommendations={recommendations}
+            recommendations={[]} // Now streamed via children
             articles={articles}
-            extraSections={extraSections}
-        />
+            extraSections={[]}   // Now streamed via children
+        >
+            {/* 2. Stream Related Content (Non-Blocking) */}
+            <Suspense fallback={<RelatedSectionsSkeleton movie={movie} />}>
+                <MovieRelatedSections movie={movie} />
+            </Suspense>
+        </MoviePageClient>
     );
 }

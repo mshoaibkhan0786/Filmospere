@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import type { Metadata } from 'next';
+import PageBackButton from '@/components/PageBackButton';
 
 export const metadata: Metadata = {
     title: 'Privacy Policy - Filmospere',
@@ -12,13 +12,12 @@ export default function PrivacyPage() {
     return (
         <div style={{ minHeight: '100vh', backgroundColor: '#0a0a0a', color: '#fff', padding: '100px 2rem 2rem' }}>
             <div className="container" style={{ maxWidth: '900px', margin: '0 auto' }}>
-                <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: '#888', textDecoration: 'none', marginBottom: '2rem' }}>
-                    <ArrowLeft size={20} />
-                    Back to Home
-                </Link>
+                <div style={{ marginBottom: '2rem' }}>
+                    <PageBackButton />
+                </div>
 
                 <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', borderBottom: '3px solid #e50914', paddingBottom: '0.5rem' }}>Privacy Policy</h1>
-                <p style={{ color: '#888', marginBottom: '2rem' }}>Last Updated: December 18, 2024</p>
+                <p style={{ color: '#888', marginBottom: '2rem' }}>Last Updated: December 18, 2025</p>
 
                 <section style={{ marginBottom: '2rem' }}>
                     <h2 style={{ fontSize: '1.8rem', marginBottom: '1rem', color: '#e50914' }}>1. Information We Collect</h2>

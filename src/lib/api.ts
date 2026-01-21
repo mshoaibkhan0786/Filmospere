@@ -92,7 +92,8 @@ export const getHomeData = async (): Promise<{ movies: Movie[], sections: any[] 
                     tags: ensureArray(movieData.tags),
                     images: ensureArray(movieData.images).length > 0 ? ensureArray(movieData.images) : (movieData.backdropUrl ? [movieData.backdropUrl] : []),
                     rating: typeof movieData.rating === 'number' ? movieData.rating : 0,
-                    voteCount: typeof movieData.voteCount === 'number' ? movieData.voteCount : 0
+                    voteCount: typeof movieData.voteCount === 'number' ? movieData.voteCount : 0,
+                    certification: movieData.certification || undefined
                 });
             }
         });
@@ -382,29 +383,41 @@ export const getMoviesByTag = async (tag: string, start = 0, count = 20): Promis
             query = query.or(`data->>language.ilike.${mappedLang},data->>original_language.ilike.${mappedLang}`);
         } else if (normalizedTag === 'web series' || normalizedTag === 'series' || normalizedTag === 'web-series') {
             query = query.contains('data', { contentType: 'series' });
-        } else if (normalizedTag === 'trending') {
+        } else if (normalizedTag === 'trending' || normalizedTag === 'popular') {
             query = query.order('data->voteCount', { ascending: false });
-        } else if (normalizedTag === 'latest movies & series' || normalizedTag === 'latest') {
+        } else if (normalizedTag === 'top-rated' || normalizedTag === 'top rated') {
+            query = query
+                .not('data->>rating', 'is', null)
+                .neq('data->>rating', '0')
+                .neq('data->>rating', 'N/A')
+                .gte('data->voteCount', 50)
+                .order('data->rating', { ascending: false });
+        } else if (normalizedTag === 'latest movies & series' || normalizedTag === 'latest' || normalizedTag === 'new-releases' || normalizedTag === 'new releases') {
             query = query.order('data->releaseYear', { ascending: false });
         } else {
             // 3. General Tag Search (Case Insensitive Hack)
-            // JSONB `contains` is case-sensitive. The DB usually has tags as 'Horror', 'Action' (Title Case).
-            // Input 'horror' (from URL) won't match 'Horror'.
 
-            // Convert input to Title Case as a best guess for the DB value
-            const titleCaseTag = tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase(); // Simple 'Horror'
+            let searchTag = tag;
+            // Handle Sci-Fi variants
+            if (normalizedTag === 'sci-fi' || normalizedTag === 'science-fiction' || normalizedTag === 'science fiction') {
+                // Try both standard TMDB tag 'Science Fiction' and common 'Sci-Fi'
+                // Since .contains is strict, we might need an .or() or just pick the most common.
+                // Assuming TMDB data: 'Science Fiction' is the standard Genre name.
+                searchTag = 'Science Fiction';
+            }
 
-            // Try matching EITHER the formatted title case OR the raw lowercase (if data varies)
-            // Since we can't do OR on a contains easily without complex syntax, let's use the Title Case primarily
-            // as that's the standard for our DB.
-            // But to be robust, let's use a TEXT search on the tags array if possible, or just exact match on the most likely variant.
+            const titleCaseTag = searchTag === 'Science Fiction'
+                ? 'Science Fiction'
+                : searchTag.charAt(0).toUpperCase() + searchTag.slice(1).toLowerCase();
 
-            // Validating likely DB capitalization: 'Action', 'Sci-Fi' (needs special handling), 'Romance'
+            // Override for specifically hardcoded overrides if any
             let dbTag = titleCaseTag;
-            if (normalizedTag === 'sci-fi') dbTag = 'Sci-Fi';
-            if (normalizedTag === 'sci fi') dbTag = 'Sci-Fi';
 
-            query = query.contains('data', { tags: [dbTag] });
+            // Robust Fix: Use ILIKE on the JSON string representation of tags
+            // This handles "Drama", "drama", "DRAMA", etc. without strict casing.
+            // We search for the tag surrounded by quotes or just the text to be safe in JSON string.
+            // Simpler: just search for the text.
+            query = query.ilike('data->>tags', `%${searchTag}%`);
         }
 
         // Apply Ordering for non-trending/latest/series-specific (if needed)

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Mail, Send } from 'lucide-react';
+import { Mail, Send, Instagram } from 'lucide-react';
 import emailjs from '@emailjs/browser';
+import PageBackButton from '@/components/PageBackButton';
 
 // We'll manage meta separately or in a layout, but for now client component pages don't export metadata effectively in same file
 // unless we make a wrapper. But standard way for interactive page is 'use client'.
@@ -58,10 +58,9 @@ export default function ContactPage() {
     return (
         <div style={{ minHeight: '100vh', backgroundColor: '#0a0a0a', color: '#fff', padding: '100px 2rem 2rem' }}>
             <div className="container" style={{ maxWidth: '700px', margin: '0 auto' }}>
-                <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: '#888', textDecoration: 'none', marginBottom: '2rem' }}>
-                    <ArrowLeft size={20} />
-                    Back to Home
-                </Link>
+                <div style={{ marginBottom: '2rem' }}>
+                    <PageBackButton />
+                </div>
 
                 <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', borderBottom: '3px solid #e50914', paddingBottom: '0.5rem' }}>Contact Us</h1>
                 <p style={{ color: '#ccc', marginBottom: '2rem', lineHeight: '1.6' }}>
@@ -211,6 +210,83 @@ export default function ContactPage() {
                         </button>
                     </div>
                 )}
+            </div>
+
+            <div style={{
+                marginTop: '4rem',
+                paddingTop: '2rem',
+                borderTop: '1px solid #222',
+                textAlign: 'center'
+            }}>
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: '#888' }}>Connect with us on Social Media</h3>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem' }}>
+                    <a
+                        href="https://instagram.com/filmospere"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                            color: '#ccc',
+                            transition: 'color 0.2s',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            textDecoration: 'none'
+                        }}
+                    >
+                        <div style={{
+                            width: '50px',
+                            height: '50px',
+                            borderRadius: '50%',
+                            backgroundColor: '#222',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1px solid #333'
+                        }}>
+                            <Instagram size={24} color="#E4405F" />
+                        </div>
+                        <span style={{ fontSize: '0.9rem' }}>Instagram</span>
+                    </a>
+
+                    <a
+                        href="https://pin.it/13ceGnoCW"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                            color: '#ccc',
+                            transition: 'color 0.2s',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            textDecoration: 'none'
+                        }}
+                    >
+                        <div style={{
+                            width: '50px',
+                            height: '50px',
+                            borderRadius: '50%',
+                            backgroundColor: '#222',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1px solid #333'
+                        }}>
+                            {/* Using a custom SVG for Pinterest since Lucide might not have the brand icon yet, or using closest metaphor */}
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="#BD081C"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.399.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.951-7.252 4.173 0 7.41 2.967 7.41 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.607 0 11.985-5.365 11.985-11.987C23.97 5.367 18.62 0 12.017 0z" />
+                            </svg>
+                        </div>
+                        <span style={{ fontSize: '0.9rem' }}>Pinterest</span>
+                    </a>
+                </div>
             </div>
         </div>
     );

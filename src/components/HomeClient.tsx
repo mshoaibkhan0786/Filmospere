@@ -382,9 +382,14 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
                                         linkTo={
                                             section.id === 'series'
                                                 ? '/section/web-series'
-                                                : (section.type === 'custom' && section.query
-                                                    ? `/section/${encodeURIComponent(section.query)}`
-                                                    : (section.id ? `/section/${section.id}` : undefined))
+                                                : section.id === 'latest'
+                                                    ? '/section/new-releases'
+                                                    : (section.type === 'custom' && section.query
+                                                        ? `/section/${(() => {
+                                                            const slug = section.query.toLowerCase().replace(/\s+/g, '-');
+                                                            return slug === 'sci-fi' ? 'science-fiction' : slug;
+                                                        })()}`
+                                                        : (section.id ? `/section/${section.id}` : undefined))
                                         }
                                         onEndReached={() => {
                                             const cleanTitle = section.title.split(' (')[0];

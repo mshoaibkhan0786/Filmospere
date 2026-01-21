@@ -114,7 +114,7 @@ const MovieVideos: React.FC<MovieVideosProps> = ({ videos, trailerUrl, posterUrl
             >
                 {allVideos.map(video => {
                     const videoId = getYoutubeId(video.videoUrl);
-                    const thumbnailUrl = video.thumbnailUrl || (videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : posterUrl);
+                    const thumbnailUrl = video.thumbnailUrl || (videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : posterUrl);
 
                     return (
                         <div
@@ -150,13 +150,9 @@ const MovieVideos: React.FC<MovieVideosProps> = ({ videos, trailerUrl, posterUrl
                                         objectFit: 'cover'
                                     }}
                                     onError={(e) => {
-                                        // Fallback if maxresdefault doesn't exist (some videos only have hqdefault)
+                                        // Fallback to poster if thumbnail fails
                                         const target = e.target as HTMLImageElement;
-                                        if (videoId && target.src.includes('maxresdefault')) {
-                                            target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-                                        } else {
-                                            target.src = posterUrl;
-                                        }
+                                        target.src = posterUrl;
                                     }}
                                 />
                                 <div style={{

@@ -9,11 +9,12 @@ import { isValidContent } from '../utils/formatUtils';
 
 interface SectionPageClientProps {
     title: string;
+    description?: string;
     initialMovies: Movie[];
     hasInitialMore: boolean;
 }
 
-const SectionPageClient: React.FC<SectionPageClientProps> = ({ title, initialMovies, hasInitialMore }) => {
+const SectionPageClient: React.FC<SectionPageClientProps> = ({ title, description, initialMovies, hasInitialMore }) => {
     const router = useRouter();
     const [movies, setMovies] = useState<Movie[]>(initialMovies);
     const [hasMore, setHasMore] = useState(hasInitialMore);

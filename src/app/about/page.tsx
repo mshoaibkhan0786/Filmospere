@@ -1,7 +1,6 @@
 import React from 'react';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import type { Metadata } from 'next';
+import PageBackButton from '../../components/PageBackButton';
 
 export const metadata: Metadata = {
     title: 'About & Credits - Filmospere',
@@ -12,10 +11,9 @@ export default function AboutPage() {
     return (
         <div style={{ minHeight: '100vh', backgroundColor: '#0a0a0a', color: '#fff', padding: '100px 2rem 2rem' }}>
             <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
-                <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: '#888', textDecoration: 'none', marginBottom: '2rem' }}>
-                    <ArrowLeft size={20} />
-                    Back to Home
-                </Link>
+                <div style={{ marginBottom: '2rem' }}>
+                    <PageBackButton />
+                </div>
 
                 <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', borderBottom: '3px solid #e50914', paddingBottom: '0.5rem' }}>About & Credits</h1>
 
@@ -97,17 +95,6 @@ export default function AboutPage() {
                         Built with modern web technologies including React, TypeScript, Next.js, and Supabase for a fast, responsive user experience.
                     </p>
                 </section>
-
-                <footer style={{
-                    marginTop: '4rem',
-                    paddingTop: '2rem',
-                    borderTop: '1px solid #333',
-                    color: '#666',
-                    fontSize: '0.9rem',
-                    textAlign: 'center'
-                }}>
-                    &copy; {new Date().getFullYear()} Filmospere. All rights reserved.
-                </footer>
             </div>
         </div>
     );
