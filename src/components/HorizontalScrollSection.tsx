@@ -262,7 +262,7 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title
                     grid-auto-flow: column; /* Fill columns first */
                     gap: 12px;
                     overflow-x: auto;
-                    padding-right: 16px; /* End padding */
+                    padding-right: 4px; /* Minimal end padding */
                     padding-bottom: 12px;
                     scrollbar-width: none;
                     -ms-overflow-style: none;

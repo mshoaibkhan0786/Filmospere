@@ -262,8 +262,8 @@ a {
 }
 
 .movie-sidebar {
-  width: 100%;
-  max-width: 400px;
+  width: 300px;
+  /*  max-width: 400px; Remove max-width conflict if we hold width: 300px */
   flex-shrink: 0;
 }
 
@@ -297,6 +297,7 @@ a {
   }
 
   .movie-sidebar {
+    width: 100% !important;
     max-width: 100%;
     order: -1;
   }
@@ -759,8 +760,19 @@ a {
 
 @media (max-width: 768px) {
   .movie-hero-container {
-    min-height: 55vh !important;
-    margin-bottom: -5vh !important;
+    min-height: auto !important;
+    height: auto !important;
+    padding-bottom: 3rem;
+    margin-bottom: 0 !important;
+  }
+
+  /* Fix recommendation sections width on mobile */
+  .section-container {
+    width: calc(100% + 32px) !important;
+    max-width: none !important;
+    margin-left: -16px !important;
+    margin-right: -16px !important;
+    padding-left: 16px !important;
   }
 
   .movie-hero-play-button,
@@ -784,6 +796,10 @@ a {
   .watch-section-title,
   .why-watch-title {
     font-size: 1.5rem !important;
+  }
+
+  .hidden-on-mobile {
+    display: none !important;
   }
 }
 

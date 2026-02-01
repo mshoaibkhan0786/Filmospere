@@ -204,7 +204,7 @@ const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendation
             />
             <MovieHero movie={movie} onPlayClick={handlePlayClick} />
 
-            <div className="container" style={{ marginTop: '2rem', position: 'relative', zIndex: 10 }}>
+            <div className="container" style={{ marginTop: '0', position: 'relative', zIndex: 10, paddingTop: '0' }}>
                 <div className="movie-content-wrapper">
 
                     {/* Unified Tags Section - Above Movie Info & Content */}
@@ -365,7 +365,7 @@ const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendation
                     </div>
 
                     {/* --- SIDEBAR --- */}
-                    <div className="movie-sidebar" style={{ width: '300px', flexShrink: 0 }}>
+                    <div className="movie-sidebar">
                         <h3 className="sidebar-section-title">Movie Info</h3>
 
                         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
@@ -516,7 +516,7 @@ const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendation
                                     </div>
                                 )}
 
-                                <div>
+                                <div className="hidden-on-mobile">
                                     <div style={{ color: '#888', fontSize: '0.9rem', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Duration</div>
                                     <div style={{ fontWeight: 500 }}>
                                         {movie.contentType === 'series' || movie.seasons?.length ? (
@@ -555,7 +555,7 @@ const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendation
 
                         {/* Ratings Section - Hidden if 0 */}
                         {movie.rating > 0 && (
-                            <div style={{ marginTop: '3rem' }}>
+                            <div style={{ marginTop: '3rem' }} className="hidden-on-mobile">
                                 <h3 className="sidebar-section-title">Rating</h3>
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     <div style={{ color: '#888', fontSize: '0.9rem', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Filmospere Score</div>
@@ -567,6 +567,24 @@ const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendation
                                         )}
                                     </div>
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Storyline Section (Mobile & Desktop Sidebar) */}
+                        {movie.description && (
+                            <div style={{ marginTop: '3rem', width: '100%' }}>
+                                <h3 className="why-watch-title" style={{ marginBottom: '1rem', fontSize: '1.4rem' }}>Storyline</h3>
+                                <p style={{
+                                    fontSize: '1.1rem',
+                                    lineHeight: '1.8',
+                                    color: '#d1d1d1',
+                                    fontFamily: 'Georgia, serif', // Article font
+                                    textAlign: 'justify',
+                                    width: '100%',
+                                    maxWidth: '100%'
+                                }}>
+                                    {movie.description}
+                                </p>
                             </div>
                         )}
 
