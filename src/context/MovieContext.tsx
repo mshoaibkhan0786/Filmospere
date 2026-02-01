@@ -11,7 +11,7 @@ interface MovieContextType {
     isLoading: boolean;
     getMovie: (id: string) => Movie | undefined; // Sync lookup in cache
     fetchMovieById: (id: string, forceRefresh?: boolean) => Promise<Movie | undefined>; // Async DB fetch
-    searchMovies: (query: string, offset?: number, limit?: number) => Promise<{ results: Movie[]; count: number }>; // Async DB search with pagination
+    searchMovies: (query: string, offset?: number, limit?: number, type?: 'all' | 'title' | 'broad') => Promise<{ results: Movie[]; count: number }>; // Async DB search with pagination
     addMovie: (movie: Movie) => Promise<void>;
     updateMovie: (id: string, movie: Partial<Movie>) => Promise<void>;
     deleteMovie: (id: string) => Promise<void>;
@@ -483,41 +483,44 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     }, [movies]);
 
-    const searchMovies = useCallback(async (rawQuery: string, offset: number = 0, limit: number = 42): Promise<{ results: Movie[]; count: number }> => {
+    const searchMovies = useCallback(async (rawQuery: string, offset: number = 0, limit: number = 42, type: 'all' | 'title' | 'broad' = 'all'): Promise<{ results: Movie[]; count: number }> => {
         const query = rawQuery.trim();
         if (!query) return { results: [], count: 0 };
 
         try {
-            // Priority 1: Smart Client-Side Search (Single Query)
-            // Uses .or() to search Title, Tags, and Director.
-            // rely on voteCount sorting to surface popularity.
-            // This ensures consistent pagination (no offset skipping bugs).
+            // Initialize promises
+            let titleQueryPromise = Promise.resolve({ data: [] as any[], error: null });
+            let broadQueryPromise = Promise.resolve({ data: [] as any[], error: null });
 
-            // Priority 1: Hybrid Search Strategy (Title Priority + Broad Context)
+            // Query A: Title Matches (Executes if type is 'all' or 'title')
+            // OPTIMIZATION: Select only needed fields AND alias them for easy mapping
+            if (type === 'all' || type === 'title') {
+                titleQueryPromise = supabase
+                    .from('movies')
+                    .select('id, title:data->title, posterUrl:data->posterUrl, releaseYear:data->releaseYear, rating:data->rating, slug:data->slug')
+                    .ilike('data->>title', `%${query}%`) // Reverted to data->>title as this is likely the indexed field
+                    .limit(50) as any;
+            }
 
-            // Query A: Title Matches (The "Seek" Query) - Finds exact/partial title matches regardless of popularity
-            const titleQuery = supabase
-                .from('movies')
-                .select('*')
-                .ilike('title', `%${query}%`)
-                .limit(50); // Fetch enough to cover reasonable title matches
-
-            // Query B: Broad Matches (The "Browse" Query) - Finds relevant tags/cast/director, sorted by popularity
-            const broadQuery = supabase
-                .from('movies')
-                .select('*')
-                .or(`data->>tags.ilike.%${query}%,data->>director.ilike.%${query}%,data->>cast.ilike.%${query}%`)
-                .order('data->voteCount', { ascending: false })
-                .limit(100); // Fetch enough popular results
+            // Query B: Broad Matches (Executes if type is 'all' or 'broad')
+            if ((type === 'all' || type === 'broad') && query.length >= 3) {
+                broadQueryPromise = supabase
+                    .from('movies')
+                    .select('id, title:data->title, posterUrl:data->posterUrl, releaseYear:data->releaseYear, rating:data->rating, slug:data->slug')
+                    .or(`data->>tags.ilike.%${query}%,data->>director.ilike.%${query}%,data->>cast.ilike.%${query}%`)
+                    .order('data->voteCount', { ascending: false })
+                    .limit(100) as any;
+            }
 
             // execute parallel
-            const [titleRes, broadRes] = await Promise.all([titleQuery, broadQuery]);
+            const [titleRes, broadRes] = await Promise.all([titleQueryPromise, broadQueryPromise]);
 
             if (titleRes.error) throw titleRes.error;
             if (broadRes.error) throw broadRes.error;
 
-            const titleMovies = titleRes.data ? titleRes.data.map(r => ({ ...r.data, id: r.id } as Movie)) : [];
-            const broadMovies = broadRes.data ? broadRes.data.map(r => ({ ...r.data, id: r.id } as Movie)) : [];
+            // Fix: Map the ALIASED fields directly, do not look for r.data (which is now empty/undefined)
+            const titleMovies = titleRes.data ? titleRes.data.map(r => ({ ...r, id: r.id } as Movie)) : [];
+            const broadMovies = broadRes.data ? broadRes.data.map(r => ({ ...r, id: r.id } as Movie)) : [];
 
             // Merge & Deduplicate
             const seen = new Set<string>();

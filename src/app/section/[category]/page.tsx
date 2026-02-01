@@ -56,6 +56,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             card: 'summary_large_image',
             title,
             description,
+        },
+        alternates: {
+            canonical: `https://filmospere.com/section/${decodedCategory.toLowerCase()}`
         }
     };
 }

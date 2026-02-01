@@ -58,11 +58,12 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
     // BUT the original Home.tsx had `handleSearch` passed to Navbar? 
     // Wait, Navbar is in Layout. Navbar updates URL. HomeClient listens to URL. Correct.
 
-    // Execute Search with Debounce
+    // Execute Search with Debounce - PROGRESSIVE LOADING
     useEffect(() => {
         if (!searchQuery) {
             setDbSearchResults([]);
             setTotalSearchCount(0);
+            setIsSearching(false); // Fix: Ensure loading state is reset when clearing search
             return;
         }
 
@@ -73,16 +74,45 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
 
             setIsSearching(true);
             try {
-                const { results, count } = await searchMovies(searchQuery, 0, 42);
+                // TIMEOUT GUARD: Force stop if request takes too long (e.g. 15s)
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Search timeout')), 15000)
+                );
+
+                // STAGE 1: FAST SEARCH (Title Matches Only)
+                // This usually returns in <100ms
+                const titleFetch = searchMovies(searchQuery, 0, 42, 'title');
+                const { results: titleResults, count: titleCount } = await Promise.race([titleFetch, timeoutPromise]) as any;
+
                 if (!isCancelled) {
-                    setDbSearchResults(results);
-                    setTotalSearchCount(count);
+                    setDbSearchResults(titleResults);
+                    setTotalSearchCount(titleCount);
                 }
+
+                // STAGE 2: DEEP SEARCH (Cast, Director, Tags)
+                // Only if query is long enough to warrant it
+                if (!isCancelled && searchQuery.trim().length >= 3) {
+                    const broadFetch = searchMovies(searchQuery, 0, 42, 'broad');
+                    const { results: broadResults, count: broadCount } = await Promise.race([broadFetch, timeoutPromise]) as any;
+
+                    if (!isCancelled && broadResults.length > 0) {
+                        setDbSearchResults(prev => {
+                            // Merge and Deduplicate
+                            const seen = new Set(prev.map(m => m.id));
+                            const uniqueBroad = broadResults.filter((m: Movie) => !seen.has(m.id));
+
+                            // Correctly update count
+                            setTotalSearchCount(prevCount => prevCount + uniqueBroad.length);
+
+                            return [...prev, ...uniqueBroad];
+                        });
+                    }
+                }
+
             } catch (err) {
                 if (!isCancelled) {
-                    console.error(err);
-                    setDbSearchResults([]);
-                    setTotalSearchCount(0);
+                    console.error("Search failed or timed out:", err);
+                    // On error, we still keep partial results if any
                 }
             } finally {
                 if (!isCancelled) {
@@ -183,13 +213,13 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
             if (config.id === 'trending') {
                 data = activeMovies
                     .filter(m => isValidContent(m))
-                    .sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0)) // Fixed .views to .voteCount based on Movie type
+                    .sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0))
                     .slice(0, 10);
             } else {
                 const source = smartSortedMovies;
 
                 if (config.id === 'latest') {
-                    // Filter Latest: Always include Current & Previous Year for stability
+                    // Filter Latest
                     data = source
                         .filter(m => m.releaseYear === currentYear || m.releaseYear === currentYear - 1);
                 } else if (config.id === 'series') {
@@ -202,6 +232,17 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
                     data = source.filter(m =>
                         m.tags?.some(tag => tag.toLowerCase().trim() === query)
                     );
+                }
+            }
+
+            // CRITICAL FALLBACK: If Client-side filtering returns 0 items,
+            // check if we have data in the Server-Provided initialSections (from Cache).
+            // This ensures that if the cache has "Action" movies but Client logic misses them (e.g. valid check),
+            // we still show the cached content.
+            if (data.length === 0) {
+                const cachedSection = initialSections.find(s => s.title === config.title);
+                if (cachedSection && cachedSection.data && cachedSection.data.length > 0) {
+                    data = cachedSection.data;
                 }
             }
 
@@ -276,7 +317,10 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
                 const rDate = new Date(m.releaseDate);
                 if (!isNaN(rDate.getTime()) && rDate > today) return false;
             }
-            if (!m.duration || m.duration === '0') return false;
+            // Improved Duration Check (Handles "0 min", 0, null)
+            const durationVal = parseInt(String(m.duration || '0'));
+            if (!durationVal || durationVal <= 0) return false;
+
             return true;
         });
 
@@ -290,9 +334,11 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
         const candidatesWithBanners = currentYearMovies.filter(m => m.images && m.images.length > 0);
         const pool = candidatesWithBanners.length > 0 ? candidatesWithBanners : currentYearMovies;
 
-        // Random pick
-        const selection = pool[Math.floor(Math.random() * pool.length)];
-        setFeaturedMovie(selection);
+        // Deterministic Selection (Rotate Hourly)
+        // This prevents the banner from changing on every refresh, but keeps it dynamic over the day.
+        const currentHour = new Date().getHours();
+        const index = currentHour % pool.length;
+        setFeaturedMovie(pool[index]);
     }, [activeMovies, featuredMovie]);
 
 
@@ -327,32 +373,34 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
                             </p>
                         </div>
 
-                        {isSearching ? (
+                        {isSearching && dbSearchResults.length === 0 ? (
                             <div className="cols-6-grid">
                                 {[...Array(12)].map((_, i) => (
                                     <MovieCardSkeleton key={i} />
                                 ))}
                             </div>
                         ) : dbSearchResults.length > 0 ? (
-                            <>
-                                <div className="cols-6-grid">
-                                    {dbSearchResults.map((movie, index) => (
-                                        <MovieCard
-                                            key={`${movie.id}-${index}`}
-                                            movie={movie}
-                                            onClick={(movie) => router.push(`/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`)}
-                                        />
-                                    ))}
-                                </div>
+                            <div className="cols-6-grid" style={{ marginBottom: '4rem' }}>
+                                {dbSearchResults.map((movie, index) => (
+                                    <MovieCard
+                                        key={`${movie.id}-${index}`}
+                                        movie={movie}
+                                        onClick={(movie) => router.push(`/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`)}
+                                    />
+                                ))}
 
-                                {isLoadingMore && (
-                                    <div className="cols-6-grid" style={{ marginTop: '2rem' }}>
-                                        {[...Array(12)].map((_, i) => (
-                                            <MovieCardSkeleton key={`loading-${i}`} />
-                                        ))}
-                                    </div>
+                                {isSearching && (
+                                    [...Array(6)].map((_, i) => (
+                                        <MovieCardSkeleton key={`loading-more-${i}`} />
+                                    ))
                                 )}
-                            </>
+
+                                {isLoadingMore && !isSearching && (
+                                    [...Array(12)].map((_, i) => (
+                                        <MovieCardSkeleton key={`loading-${i}`} />
+                                    ))
+                                )}
+                            </div>
                         ) : (
                             <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-secondary)' }}>
                                 <p>No content found matching your criteria.</p>

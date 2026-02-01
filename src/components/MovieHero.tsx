@@ -228,35 +228,53 @@ const MovieHero: React.FC<MovieHeroProps> = ({ movie, onPlayClick }) => {
 
                     {/* Actions */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-                        {movie.isCopyrightFree && movie.videoUrl ? (
-                            <button
-                                onClick={() => onPlayClick(movie.videoUrl!)}
-                                className="movie-hero-play-button"
-                            >
-                                <Play fill="black" size={24} />
-                                Play
-                            </button>
-                        ) : (
-                            movie.trailerUrl && (
-                                <button
-                                    onClick={() => onPlayClick(movie.trailerUrl!)}
-                                    className="movie-hero-play-button"
-                                >
-                                    <Play fill="black" size={24} />
-                                    Play Trailer
-                                </button>
-                            )
-                        )}
+                        {(() => {
+                            // Logic: 
+                            // 1. Explicit 'trailerUrl' property
+                            // 2. Search 'videos' for item with "Trailer" in title
+                            // 3. Fallback to first video in array
+                            let validTrailerUrl = movie.trailerUrl;
 
-                        {movie.isCopyrightFree && movie.videoUrl && movie.trailerUrl && (
-                            <button
-                                onClick={() => onPlayClick(movie.trailerUrl!)}
-                                className="movie-hero-trailer-button"
-                            >
-                                <MonitorPlay size={24} />
-                                Trailer
-                            </button>
-                        )}
+                            if (!validTrailerUrl && movie.videos && movie.videos.length > 0) {
+                                const trailerVideo = movie.videos.find(v => v.title && v.title.toLowerCase().includes('trailer'));
+                                validTrailerUrl = trailerVideo ? trailerVideo.videoUrl : movie.videos[0].videoUrl;
+                            }
+
+                            if (movie.isCopyrightFree && movie.videoUrl) {
+                                return (
+                                    <>
+                                        <button
+                                            onClick={() => onPlayClick(movie.videoUrl!)}
+                                            className="movie-hero-play-button"
+                                        >
+                                            <Play fill="black" size={24} />
+                                            Play
+                                        </button>
+                                        {/* Show Trailer button as secondary if BOTH exist */}
+                                        {validTrailerUrl && (
+                                            <button
+                                                onClick={() => onPlayClick(validTrailerUrl!)}
+                                                className="movie-hero-trailer-button"
+                                            >
+                                                <MonitorPlay size={24} />
+                                                Trailer
+                                            </button>
+                                        )}
+                                    </>
+                                );
+                            } else if (validTrailerUrl) {
+                                return (
+                                    <button
+                                        onClick={() => onPlayClick(validTrailerUrl!)}
+                                        className="movie-hero-play-button"
+                                    >
+                                        <Play fill="black" size={24} />
+                                        Play Trailer
+                                    </button>
+                                );
+                            }
+                            return null;
+                        })()}
                     </div>
                 </div>
             </div>

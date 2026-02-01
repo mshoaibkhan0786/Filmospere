@@ -172,7 +172,7 @@ const MovieSeasons: React.FC<MovieSeasonsProps> = ({ seasons }) => {
                                         fill
                                         sizes="(max-width: 768px) 120px, 160px"
                                         style={{ objectFit: 'cover' }}
-                                        unoptimized={!!episode.thumbnailUrl.includes('wsrv.nl')}
+                                        unoptimized={true}
                                     />
                                 ) : (
                                     <div className="flex-center" style={{ width: '100%', height: '100%', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

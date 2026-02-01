@@ -46,12 +46,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 title: article.title,
                 description,
                 images: [image],
+            },
+            alternates: {
+                canonical: `https://filmospere.com/articles/${slug}`
             }
         };
     } catch (e) {
         console.error('generateMetadata failed for ArticlePage:', e);
         return {
-            title: 'Error - Filmosphere',
+            title: 'Error - Filmospere',
         };
     }
 }
@@ -76,6 +79,39 @@ export default async function ArticlePage({ params }: Props) {
 
     return (
         <div style={{ minHeight: '100vh', backgroundColor: '#141414', color: 'white' }}>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "Article",
+                        "headline": article.title,
+                        "image": [
+                            article.image_url || 'https://filmospere.com/filmospere-social.png'
+                        ],
+                        "datePublished": article.created_at,
+                        "dateModified": article.created_at,
+                        "author": [{
+                            "@type": "Organization",
+                            "name": "Filmospere Editorial Team",
+                            "url": "https://filmospere.com"
+                        }],
+                        "publisher": {
+                            "@type": "Organization",
+                            "name": "Filmospere",
+                            "logo": {
+                                "@type": "ImageObject",
+                                "url": "https://filmospere.com/favicon.png"
+                            }
+                        },
+                        "description": article.excerpt || article.title,
+                        "mainEntityOfPage": {
+                            "@type": "WebPage",
+                            "@id": `https://filmospere.com/articles/${article.slug}`
+                        }
+                    })
+                }}
+            />
 
 
             <article style={{ marginTop: '0' }} className={isSpecialArticle ? 'special-article' : ''}>
@@ -139,12 +175,12 @@ export default async function ArticlePage({ params }: Props) {
                             textShadow: '0 2px 4px rgba(0,0,0,0.5)'
                         }}>
                             <img
-                                src={`https://ui-avatars.com/api/?name=${article.author}&background=333&color=fff`}
-                                alt={article.author}
+                                src={`https://ui-avatars.com/api/?name=Filmospere+Team&background=333&color=fff`}
+                                alt="Filmospere Team"
                                 style={{ width: '32px', height: '32px', borderRadius: '50%' }}
                             />
                             <div>
-                                <div style={{ color: 'white', fontWeight: 600 }}>{article.author}</div>
+                                <div style={{ color: 'white', fontWeight: 600 }}>Filmospere Editorial Team</div>
                                 <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{formatDate(article.created_at)}</div>
                             </div>
                         </div>

@@ -43,9 +43,15 @@ export const metadata: Metadata = {
     description: "Your ultimate destination for movies, web series, and entertainment.",
     creator: "@Filmospere", // Placeholder handle
   },
-  other: {
-    "p:domain_verify": "17acd70aa3b8f4ec55ee795b81e45c2d"
-  }
+  verification: {
+    google: "pgPYhce5g1BoB5SzNdwXVy1OxpuayF0OMShAlICJQmQ",
+    other: {
+      "p:domain_verify": "17acd70aa3b8f4ec55ee795b81e45c2d",
+    },
+  },
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export const viewport: Viewport = {

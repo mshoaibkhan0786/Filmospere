@@ -161,45 +161,108 @@ const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendation
     // Derived state for gallery
     const images = movie.images || (movie.backdropUrl ? [movie.backdropUrl] : [movie.posterUrl]);
 
+    // SEO: Schema.org Structured Data
+    const schemaData = {
+        "@context": "https://schema.org",
+        "@type": movie.contentType === 'series' ? "TVSeries" : "Movie",
+        "name": movie.title,
+        "description": movie.description || movie.metaDescription,
+        "image": movie.posterUrl,
+        "datePublished": movie.releaseDate || movie.releaseYear,
+        "aggregateRating": movie.rating > 0 ? {
+            "@type": "AggregateRating",
+            "ratingValue": movie.rating,
+            "bestRating": "10",
+            "ratingCount": movie.voteCount || 100
+        } : undefined,
+        "director": movie.director ? {
+            "@type": "Person",
+            "name": movie.director
+        } : undefined,
+        "actor": movie.cast?.slice(0, 5).map(actor => ({
+            "@type": "Person",
+            "name": actor.name
+        })),
+        "genre": movie.tags,
+        "url": `https://filmospere.com/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`,
+        "trailer": movie.trailerUrl ? {
+            "@type": "VideoObject",
+            "name": `${movie.title} Trailer`,
+            "description": `Watch the official trailer for ${movie.title} on Filmospere`,
+            "thumbnailUrl": movie.backdropUrl || movie.posterUrl,
+            "uploadDate": movie.releaseDate || `${movie.releaseYear}-01-01`,
+            "contentUrl": movie.trailerUrl,
+            "embedUrl": movie.trailerUrl.includes('youtube') ? `https://www.youtube.com/embed/${getYoutubeId(movie.trailerUrl)}` : movie.trailerUrl
+        } : undefined
+    };
+
     return (
         <div style={{ minHeight: '100vh', backgroundColor: '#141414', color: 'white', paddingBottom: '2rem' }}>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
+            />
             <MovieHero movie={movie} onPlayClick={handlePlayClick} />
 
             <div className="container" style={{ marginTop: '2rem', position: 'relative', zIndex: 10 }}>
                 <div className="movie-content-wrapper">
 
-                    {/* Mobile Tags (Visible only on mobile via CSS) */}
-                    <div className="mobile-tags-section">
-                        {movie.tags?.slice(0, 5).map(tag => (
+                    {/* Unified Tags Section - Above Movie Info & Content */}
+                    <div
+                        className="tags-scroll-container"
+                        style={{
+                            display: 'flex',
+                            flexWrap: 'nowrap',
+                            overflowX: 'auto',
+                            gap: '0.8rem',
+                            marginBottom: '0', // Let the gap of wrapper handle spacing or add small
+                            paddingBottom: '0.5rem',
+                            scrollbarWidth: 'none',
+                            msOverflowStyle: 'none',
+                            WebkitOverflowScrolling: 'touch',
+                            width: '100%',
+                            flex: '0 0 100%', // Force full width in flex wrap
+                            order: -2 // Ensure it appears above the sidebar (which is order -1 on mobile)
+                        }}
+                    >
+                        <style jsx global>{`
+                            .tags-scroll-container::-webkit-scrollbar {
+                                display: none;
+                            }
+                            .movie-tag-pill {
+                                background-color: rgba(255, 255, 255, 0.05);
+                                border: 1px solid #333;
+                                padding: 8px 20px;
+                                border-radius: 50px;
+                                font-size: 0.85rem;
+                                line-height: 1;
+                                color: #ccc;
+                                text-decoration: none;
+                                transition: all 0.2s;
+                                cursor: pointer;
+                                white-space: nowrap;
+                                flex-shrink: 0;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                min-height: auto !important;
+                                height: auto !important;
+                            }
+                            .movie-tag-pill:hover {
+                                border-color: white;
+                                color: white;
+                            }
+                            .movie-tag-pill:active {
+                                background-color: #e50914;
+                                border-color: #e50914;
+                                color: white;
+                            }
+                        `}</style>
+                        {movie.tags?.map(tag => (
                             <Link
                                 key={tag}
                                 href={`/section/${encodeURIComponent(tag)}`}
-                                style={{
-                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                    border: '1px solid #333',
-                                    padding: '0 20px',
-                                    borderRadius: '50px',
-                                    fontSize: '14px',
-                                    color: '#ccc',
-                                    textDecoration: 'none',
-                                    transition: 'all 0.2s',
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap',
-                                    flexShrink: 0,
-                                    height: '36px',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}
-                                onMouseEnter={e => {
-                                    e.currentTarget.style.borderColor = 'white';
-                                    e.currentTarget.style.color = 'white';
-                                }}
-                                onMouseLeave={e => {
-                                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                                    e.currentTarget.style.borderColor = '#333';
-                                    e.currentTarget.style.color = '#ccc';
-                                }}
+                                className="movie-tag-pill"
                             >
                                 {tag}
                             </Link>
@@ -208,48 +271,6 @@ const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendation
 
                     {/* --- MAIN COLUMN --- */}
                     <div className="movie-main-col">
-
-                        {/* Desktop Tags (Hidden on mobile via CSS usually, or just regular list) */}
-                        {/* Desktop Tags */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', marginBottom: '1rem' }}>
-                            {movie.tags?.map(tag => (
-                                <Link
-                                    key={tag}
-                                    href={`/section/${encodeURIComponent(tag)}`}
-                                    style={{
-                                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                        border: '1px solid #333',
-                                        padding: '0 20px',
-                                        borderRadius: '50px',
-                                        fontSize: '14px',
-                                        color: '#ccc',
-                                        textDecoration: 'none',
-                                        transition: 'all 0.2s',
-                                        cursor: 'pointer',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        height: '36px'
-                                    }}
-                                    onMouseEnter={e => {
-                                        e.currentTarget.style.borderColor = 'white';
-                                        e.currentTarget.style.color = 'white';
-                                    }}
-                                    onMouseLeave={e => {
-                                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                                        e.currentTarget.style.borderColor = '#333';
-                                        e.currentTarget.style.color = '#ccc';
-                                    }}
-                                    onMouseDown={e => {
-                                        e.currentTarget.style.backgroundColor = '#e50914';
-                                        e.currentTarget.style.borderColor = '#e50914';
-                                        e.currentTarget.style.color = 'white';
-                                    }}
-                                >
-                                    {tag}
-                                </Link>
-                            ))}
-                        </div>
 
                         {/* Watch Options */}
                         <WatchOptions
@@ -527,7 +548,7 @@ const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendation
                                     }}
                                     onMouseEnter={(e: React.MouseEvent<HTMLImageElement>) => e.currentTarget.style.transform = 'scale(1.05)'}
                                     onMouseLeave={(e: React.MouseEvent<HTMLImageElement>) => e.currentTarget.style.transform = 'scale(1)'}
-                                    unoptimized={!!movie.posterUrl.includes('wsrv.nl')}
+                                    unoptimized={true}
                                 />
                             </div>
                         </div>
@@ -574,7 +595,7 @@ const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendation
                                                         fill
                                                         sizes="60px"
                                                         style={{ objectFit: 'cover' }}
-                                                        unoptimized={!!article.image_url.includes('wsrv.nl')}
+                                                        unoptimized={true}
                                                     />
                                                 </div>
                                             )}
@@ -741,7 +762,7 @@ const MoviePageClient: React.FC<MoviePageClientProps> = ({ movie, recommendation
                                                     }}
                                                     onMouseEnter={(e: React.MouseEvent<HTMLImageElement>) => e.currentTarget.style.transform = 'scale(1.05)'}
                                                     onMouseLeave={(e: React.MouseEvent<HTMLImageElement>) => e.currentTarget.style.transform = 'scale(1)'}
-                                                    unoptimized={!!img.includes('wsrv.nl')}
+                                                    unoptimized={true}
                                                 />
                                             </div>
                                         ))}

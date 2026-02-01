@@ -6,6 +6,7 @@ import MovieCard from './MovieCard';
 import MovieCardSkeleton from './MovieCardSkeleton';
 import type { Movie } from '../types';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface HorizontalScrollSectionProps {
     title: string;
@@ -83,30 +84,39 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title
     return (
         <div className="section-container" style={{ position: 'relative', marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2
-                    onClick={() => !loading && linkTo && router.push(linkTo)}
-                    style={{
-                        fontSize: '1.8rem',
-                        fontWeight: 'bold',
-                        margin: 0,
-                        borderLeft: '4px solid var(--primary-color)',
-                        paddingLeft: '1rem',
-                        cursor: linkTo ? 'pointer' : 'default',
-                        transition: 'color 0.2s'
-                    }}
-                    onMouseEnter={e => {
-                        if (linkTo && !loading) {
-                            e.currentTarget.style.color = '#e50914';
-                        }
-                    }}
-                    onMouseLeave={e => {
-                        if (linkTo && !loading) {
-                            e.currentTarget.style.color = 'white';
-                        }
-                    }}
-                >
-                    {title}
-                </h2>
+                {linkTo && !loading ? (
+                    <Link href={linkTo} style={{ textDecoration: 'none', color: 'white' }}>
+                        <h2
+                            style={{
+                                fontSize: '1.8rem',
+                                fontWeight: 'bold',
+                                margin: 0,
+                                borderLeft: '4px solid var(--primary-color)',
+                                paddingLeft: '1rem',
+                                cursor: 'pointer',
+                                transition: 'color 0.2s'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.color = '#e50914'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'white'}
+                        >
+                            {title}
+                        </h2>
+                    </Link>
+                ) : (
+                    <h2
+                        style={{
+                            fontSize: '1.8rem',
+                            fontWeight: 'bold',
+                            margin: 0,
+                            borderLeft: '4px solid var(--primary-color)',
+                            paddingLeft: '1rem',
+                            cursor: 'default',
+                            transition: 'color 0.2s'
+                        }}
+                    >
+                        {title}
+                    </h2>
+                )}
             </div>
 
             <div
@@ -179,58 +189,26 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title
                 </div>
 
                 <div className="section-mobile-layout">
-                    {(() => {
-                        const visibleData = data.slice(0, visibleCount);
-                        const mid = Math.ceil(visibleData.length / 2); // Split evenly across 2 rows
-                        const row1 = visibleData.slice(0, mid);
-                        const row2 = visibleData.slice(mid);
-
-                        return (
-                            <div
-                                className="mobile-scroll-container"
-                                style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '10px' }}
-                            >
-                                <div className="mobile-scroll-row" style={{ display: 'flex', width: '100%', gap: '12px', overflowX: 'auto', padding: '0 4px' }}>
-                                    {loading ? (
-                                        [...Array(4)].map((_, i) => (
-                                            <div key={i} className="horizontal-scroll-card">
-                                                <MovieCardSkeleton />
-                                            </div>
-                                        ))
-                                    ) : (
-                                        row1.map((movie) => (
-                                            <div key={movie.id} className="horizontal-scroll-card">
-                                                <MovieCard
-                                                    movie={movie}
-                                                    onClick={(movie) => {
-                                                        router.push(`/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`);
-                                                    }}
-                                                />
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                                <div className="mobile-scroll-row" style={{ display: 'flex', width: '100%', gap: '12px', overflowX: 'auto', padding: '0 4px' }}>
-                                    {loading ? (
-                                        [...Array(4)].map((_, i) => (
-                                            <div key={i} className="horizontal-scroll-card">
-                                                <MovieCardSkeleton />
-                                            </div>
-                                        ))
-                                    ) : (
-                                        row2.map((movie) => (
-                                            <div key={movie.id} className="horizontal-scroll-card">
-                                                <MovieCard
-                                                    movie={movie}
-                                                    onClick={(movie) => router.push(`/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`)}
-                                                />
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })()}
+                    <div className="mobile-scroll-container">
+                        <div className="mobile-scroll-grid">
+                            {loading ? (
+                                [...Array(8)].map((_, i) => (
+                                    <div key={i} className="horizontal-scroll-card">
+                                        <MovieCardSkeleton />
+                                    </div>
+                                ))
+                            ) : (
+                                data.slice(0, 20).map((movie) => (
+                                    <div key={movie.id} className="horizontal-scroll-card">
+                                        <MovieCard
+                                            movie={movie}
+                                            onClick={(movie) => router.push(`/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`)}
+                                        />
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {isScrollable && !loading && isHovering && (
@@ -277,6 +255,39 @@ const HorizontalScrollSection: React.FC<HorizontalScrollSectionProps> = ({ title
                     .section-desktop-layout {
                         display: none;
                     }
+                /* Grid Layout for Mobile (Unified Scroll) */
+                .mobile-scroll-grid {
+                    display: grid;
+                    grid-template-rows: repeat(2, 1fr); /* 2 Rows fix */
+                    grid-auto-flow: column; /* Fill columns first */
+                    gap: 12px;
+                    overflow-x: auto;
+                    padding-right: 16px; /* End padding */
+                    padding-bottom: 12px;
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+                .mobile-scroll-grid::-webkit-scrollbar {
+                    display: none;
+                }
+
+                /* Mobile Phone Width (<500px): 44% width = 2 cards + peek */
+                @media (max-width: 500px) {
+                    .mobile-scroll-grid {
+                        grid-auto-columns: 44%;
+                    }
+                }
+
+                /* Tablet Width (>500px): 30% width = 3 cards + peek */
+                @media (min-width: 501px) {
+                    .mobile-scroll-grid {
+                        grid-auto-columns: 30%;
+                    }
+                }
+
+                .horizontal-scroll-card {
+                    width: 100%;
+                    height: 100%;
                 }
             `}</style>
         </div>

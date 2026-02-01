@@ -410,14 +410,11 @@ export const getMoviesByTag = async (tag: string, start = 0, count = 20): Promis
                 ? 'Science Fiction'
                 : searchTag.charAt(0).toUpperCase() + searchTag.slice(1).toLowerCase();
 
-            // Override for specifically hardcoded overrides if any
-            let dbTag = titleCaseTag;
-
-            // Robust Fix: Use ILIKE on the JSON string representation of tags
-            // This handles "Drama", "drama", "DRAMA", etc. without strict casing.
-            // We search for the tag surrounded by quotes or just the text to be safe in JSON string.
-            // Simpler: just search for the text.
-            query = query.ilike('data->>tags', `%${searchTag}%`);
+            // Optimization: Use .contains with the Title Cased tag.
+            // This allows Postgres to use the GIN index on 'data' -> 'tags',
+            // solving the statement timeout issue while maintaining case correctness
+            // (assuming tags are stored in Title Case, which is standard).
+            query = query.contains('data', { tags: [titleCaseTag] });
         }
 
         // Apply Ordering for non-trending/latest/series-specific (if needed)
@@ -447,27 +444,38 @@ export const getMoviesByTag = async (tag: string, start = 0, count = 20): Promis
     }
 };
 
-export const searchMovies = async (query: string, offset = 0, limit = 20): Promise<{ results: Movie[]; count: number }> => {
+export const searchMovies = async (query: string, offset = 0, limit = 20, type: 'all' | 'title' | 'broad' = 'all'): Promise<{ results: Movie[]; count: number }> => {
     try {
         if (!query.trim()) return { results: [], count: 0 };
 
         const safeSelect = 'id, data';
 
-        // Parallel Search Strategy (Title + Broad)
-        const titleQuery = supabase
-            .from('movies')
-            .select(safeSelect, { count: 'exact' })
-            .ilike('data->>title', `%${query}%`)
-            .range(offset, offset + limit - 1);
+        // Initialize promises
+        let titleQueryPromise = Promise.resolve({ data: [] as any[], error: null });
+        let broadQueryPromise = Promise.resolve({ data: [] as any[], error: null });
 
-        const broadQuery = supabase
-            .from('movies')
-            .select(safeSelect, { count: 'exact' })
-            .or(`data->>tags.ilike.%${query}%,data->>director.ilike.%${query}%,data->>cast.ilike.%${query}%`)
-            .order('data->voteCount', { ascending: false })
-            .range(offset, offset + limit - 1);
+        // 1. Title Search (Executes if type is 'all' or 'title')
+        if (type === 'all' || type === 'title') {
+            titleQueryPromise = supabase
+                .from('movies')
+                .select(safeSelect)
+                .ilike('data->>title', `%${query}%`)
+                // .order('data->voteCount', { ascending: false }) // Optional: sort by popularity within titles
+                .range(offset, offset + limit - 1) as any;
+        }
 
-        const [titleRes, broadRes] = await Promise.all([titleQuery, broadQuery]);
+        // 2. Broad Search (Executes if type is 'all' or 'broad')
+        // Only if query length >= 3 to avoid spam
+        if ((type === 'all' || type === 'broad') && query.trim().length >= 3) {
+            broadQueryPromise = supabase
+                .from('movies')
+                .select(safeSelect)
+                .or(`data->>tags.ilike.%${query}%,data->>director.ilike.%${query}%,data->>cast.ilike.%${query}%`)
+                .order('data->voteCount', { ascending: false })
+                .range(offset, offset + limit - 1) as any;
+        }
+
+        const [titleRes, broadRes] = await Promise.all([titleQueryPromise, broadQueryPromise]);
 
         const mapMovie = (r: any) => ({ ...r.data, id: r.id } as Movie);
 
@@ -487,7 +495,9 @@ export const searchMovies = async (query: string, offset = 0, limit = 20): Promi
 
         return {
             results: merged.slice(0, limit),
-            count: (titleRes.count || 0) + (broadRes.count || 0) // Approximation
+            // Approximation: If we got full page, assume there are more. 
+            // This is "infinite scroll friendly" enough.
+            count: (titleMovies.length + broadMovies.length) >= limit ? 100 : (titleMovies.length + broadMovies.length)
         };
 
     } catch (e) {

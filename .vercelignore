@@ -23,3 +23,8 @@ pnpm-lock.yaml
 # Vercel
 .vercel
 
+# Agent and Automation
+.agent/
+brain/
+scripts/
+

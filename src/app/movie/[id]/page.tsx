@@ -21,12 +21,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
         if (!movie) {
             return {
-                title: 'Movie Not Found - Filmosphere',
+                title: 'Movie Not Found - Filmospere',
             };
         }
 
-        const title = movie.metaTitle || `${movie.title} (${movie.releaseYear}) - Filmosphere`;
-        const description = movie.metaDescription || movie.description || `Watch ${movie.title} on Filmosphere.`;
+        const title = movie.metaTitle || `${movie.title} (${movie.releaseYear}) - Filmospere`;
+        const description = movie.metaDescription || movie.description || `Watch ${movie.title} on Filmospere.`;
         const image = movie.backdropUrl || movie.posterUrl || '/filmospere-social.png'; // Fallback to a default image if needed
 
         // Manual Content Moderation
@@ -79,6 +79,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 }
             } : {}),
             keywords: movie.keywords?.split(',').map(k => k.trim()) || [],
+            alternates: {
+                canonical: `https://filmospere.com/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`
+            },
             openGraph: {
                 title: movie.metaTitle || `${movie.title} (${movie.releaseYear})`,
                 description,
@@ -95,7 +98,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     } catch (e) {
         console.error('generateMetadata failed for MoviePage:', e);
         return {
-            title: 'Error - Filmosphere',
+            title: 'Error - Filmospere',
         };
     }
 }

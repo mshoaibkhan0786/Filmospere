@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
             borderTop: '1px solid #111',
             fontSize: '0.85rem'
         }}>
-            <div style={{
+            <div className="grid-container" style={{
                 maxWidth: '1200px',
                 margin: '0 auto',
                 display: 'grid',
@@ -48,6 +48,19 @@ const Footer: React.FC = () => {
                     <Link href="/section/web-series" style={{ color: '#444', textDecoration: 'none', transition: 'color 0.2s' }} className="footer-link">TV Series</Link>
                 </div>
 
+                {/* Column 3: Reads */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <h4 style={{ color: '#666', fontSize: '0.9rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Reads</h4>
+                    <Link href="/articles/decoding-the-fifth-dimension-the-real-meaning-of-interstellar-s-ending" style={{ color: '#444', textDecoration: 'none', transition: 'color 0.2s' }} className="footer-link">Interstellar Explained</Link>
+                    <Link href="/articles/why-the-top-wobbles-the-definitive-inception-theory" style={{ color: '#444', textDecoration: 'none', transition: 'color 0.2s' }} className="footer-link">Inception Theory</Link>
+                    <Link href="/articles/shutter-island-ending-explained" style={{ color: '#444', textDecoration: 'none', transition: 'color 0.2s' }} className="footer-link">Shutter Island</Link>
+                    <Link href="/articles/what-lies-beneath-the-house-unraveling-parasite-s-final-twist" style={{ color: '#444', textDecoration: 'none', transition: 'color 0.2s' }} className="footer-link">Parasite Explained</Link>
+                    <Link href="/articles/why-borden-s-sacrifice-redefines-the-prestige-a-definitive-analysis" style={{ color: '#444', textDecoration: 'none', transition: 'color 0.2s' }} className="footer-link">The Prestige Analysis</Link>
+                    <Link href="/articles/joker-s-final-laugh-the-true-meaning-behind-the-chaos" style={{ color: '#444', textDecoration: 'none', transition: 'color 0.2s' }} className="footer-link">Joker Ending</Link>
+                    <Link href="/articles/why-oh-dae-su-s-silence-speaks-volumes-the-definitive-oldboy-ending-theory" style={{ color: '#444', textDecoration: 'none', transition: 'color 0.2s' }} className="footer-link">Oldboy Theory</Link>
+                    <Link href="/articles/why-amy-s-return-redefines-the-marriage-in-gone-girl" style={{ color: '#444', textDecoration: 'none', transition: 'color 0.2s' }} className="footer-link">Gone Girl Analysis</Link>
+                </div>
+
                 {/* Column 3: Legal */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <h4 style={{ color: '#666', fontSize: '0.9rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Legal</h4>
@@ -65,12 +78,17 @@ const Footer: React.FC = () => {
                 borderTop: '1px solid #111',
                 color: '#333'
             }}>
-                <p>&copy; {new Date().getFullYear()} Filmosphere. All rights reserved.</p>
+                <p>&copy; {new Date().getFullYear()} Filmospere. All rights reserved.</p>
             </div>
 
             <style jsx>{`
                 .footer-link:hover {
                     color: #999 !important;
+                }
+                @media (max-width: 768px) {
+                    footer .grid-container {
+                        grid-template-columns: repeat(2, 1fr) !important;
+                    }
                 }
             `}</style>
         </footer>

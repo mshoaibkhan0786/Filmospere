@@ -56,7 +56,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, variant = 'default' 
                             transition: 'transform 0.3s ease',
                             transform: isHovered ? 'scale(1.1)' : 'scale(1)'
                         }}
-                        unoptimized={!!(article.image_url && article.image_url.includes('wsrv.nl'))}
+                        unoptimized={true}
                     />
                 </div>
 
@@ -238,7 +238,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, variant = 'default' 
                         transition: 'transform 0.5s ease',
                         transform: isHovered ? 'scale(1.1)' : 'scale(1)'
                     }}
-                    unoptimized={!!(article.image_url && article.image_url.includes('wsrv.nl'))}
+                    unoptimized={true}
                 />
                 <div style={{
                     position: 'absolute',

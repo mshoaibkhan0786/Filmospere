@@ -20,14 +20,25 @@ const FeaturedHero: React.FC<FeaturedHeroProps> = ({ movie }) => {
     const bannerUrl = movie.images && movie.images.length > 0 ? movie.images[0] : movie.posterUrl;
 
     const handlePlayClick = () => {
-        if (movie.trailerUrl) {
-            const youtubeId = getYoutubeId(movie.trailerUrl);
+        // Logic: 
+        // 1. Explicit 'trailerUrl' property
+        // 2. Search 'videos' for item with "Trailer" in title
+        // 3. Fallback to first video in array
+        let validTrailerUrl = movie.trailerUrl;
+
+        if (!validTrailerUrl && movie.videos && movie.videos.length > 0) {
+            const trailerVideo = movie.videos.find(v => v.title && v.title.toLowerCase().includes('trailer'));
+            validTrailerUrl = trailerVideo ? trailerVideo.videoUrl : movie.videos[0].videoUrl;
+        }
+
+        if (validTrailerUrl) {
+            const youtubeId = getYoutubeId(validTrailerUrl);
             if (youtubeId) {
                 setPlayingTrailerId(youtubeId);
                 return;
             }
         }
-        router.push(`/movie/${movie.id}`);
+        router.push(`/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`);
     };
 
     return (
@@ -111,7 +122,6 @@ const FeaturedHero: React.FC<FeaturedHeroProps> = ({ movie }) => {
                     }}>
                         {/* Year */}
                         <span>{movie.releaseYear}</span>
-
                         {/* Separator */}
                         <span style={{ width: '4px', height: '4px', background: '#ccc', borderRadius: '50%' }}></span>
 

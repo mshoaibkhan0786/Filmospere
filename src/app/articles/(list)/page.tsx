@@ -5,8 +5,11 @@ import ArticleCard from '../../../components/ArticleCard';
 
 
 export const metadata: Metadata = {
-    title: 'Articles',
+    title: 'Articles - Filmospere',
     description: 'Read the latest movie reviews, ending explained, and industry news on Filmospere.',
+    alternates: {
+        canonical: 'https://filmospere.com/articles'
+    }
 };
 
 // Revalidate every hour
@@ -23,6 +26,9 @@ export default async function ArticlesIndexPage() {
 
 
             <div className="container" style={{ padding: '40px 20px', maxWidth: '1200px', margin: '0 auto', width: '100%', flex: 1 }}>
+
+                {/* SEO H1 */}
+                <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '2rem' }}>Latest Articles</h1>
 
                 {/* Featured Hero Article */}
                 {featuredArticle && (

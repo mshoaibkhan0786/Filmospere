@@ -158,12 +158,13 @@ const PersonPageClient: React.FC<PersonPageClientProps> = ({ person, movies }) =
                     <div className="actor-image-container" style={{ position: 'relative' }}>
                         {person.profile_path ? (
                             <Image
-                                src={`https://image.tmdb.org/t/p/w500${person.profile_path}`}
+                                src={getOptimizedImageUrl(person.profile_path, 500)}
                                 alt={person.name}
                                 fill
                                 sizes="(max-width: 768px) 100vw, 300px"
                                 style={{ objectFit: 'cover' }}
                                 priority
+                                unoptimized={true}
                             />
                         ) : (
                             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
@@ -307,9 +308,11 @@ const PersonPageClient: React.FC<PersonPageClientProps> = ({ person, movies }) =
                 ) : (
                     <div className="cols-6-grid">
                         {displayedMovies.map(movie => (
-                            <Link key={movie.id} href={`/movie/${movie.slug || movie.id}`} style={{ textDecoration: 'none' }}>
-                                <MovieCard movie={movie} onClick={() => { }} />
-                            </Link>
+                            <MovieCard
+                                key={movie.id}
+                                movie={movie}
+                                onClick={(m) => router.push(`/movie/${m.slug || m.id}`)}
+                            />
                         ))}
                     </div>
                 )}

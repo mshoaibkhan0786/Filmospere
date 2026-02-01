@@ -5,6 +5,9 @@ import PageBackButton from '../../components/PageBackButton';
 export const metadata: Metadata = {
     title: 'About & Credits - Filmospere',
     description: 'Learn about Filmospere, our data sources including TMDB, and our content policy.',
+    alternates: {
+        canonical: 'https://filmospere.com/about'
+    }
 };
 
 export default function AboutPage() {
@@ -71,6 +74,25 @@ export default function AboutPage() {
                                 </p>
                             </div>
                         </div>
+                    </div>
+                </section>
+
+                <section style={{ marginBottom: '3rem' }}>
+                    <h2 style={{ fontSize: '1.8rem', marginBottom: '1.5rem', color: '#e50914' }}>Our Methodology</h2>
+                    <div style={{ backgroundColor: '#1f1f1f', padding: '2rem', borderRadius: '12px', border: '1px solid #333' }}>
+                        <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#fff' }}>Data Analysis & Review</h3>
+                        <p style={{ color: '#ccc', lineHeight: '1.8', marginBottom: '1.5rem' }}>
+                            Filmospere combines advanced data analysis and AI-assisted tools to uncover hidden gems, analyze industry trends, and generate movie insights.
+                            Our content is then reviewed by our editorial team to ensure quality and relevance for film enthusiasts.
+                            We believe in the power of technology to help discover great cinema, while maintaining human oversight.
+                        </p>
+
+                        <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#fff' }}>Accuracy & Corrections</h3>
+                        <p style={{ color: '#ccc', lineHeight: '1.8' }}>
+                            While we strive for perfection, data discrepancies naturally occur in the vast world of cinema.
+                            If you spot an error in any of our listings or analysis, we want to know.
+                            Please let us know via our <a href="/contact" style={{ color: '#e50914', textDecoration: 'underline' }}>Contact Page</a> so we can correct it immediately.
+                        </p>
                     </div>
                 </section>
 

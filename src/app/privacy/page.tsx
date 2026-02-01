@@ -6,6 +6,9 @@ import PageBackButton from '@/components/PageBackButton';
 export const metadata: Metadata = {
     title: 'Privacy Policy - Filmospere',
     description: 'Filmospere\'s Privacy Policy explains how we collect, use, and protect your data.',
+    alternates: {
+        canonical: 'https://filmospere.com/privacy'
+    }
 };
 
 export default function PrivacyPage() {

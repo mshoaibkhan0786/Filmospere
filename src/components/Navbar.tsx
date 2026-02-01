@@ -83,6 +83,9 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Debounce timer ref
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchTerm(value);
@@ -90,14 +93,15 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
         if (onSearch) {
             onSearch(value);
         } else {
-            // Live Search Logic (Vite Parity)
-            // If query exists, route to /?search=...
-            // If empty, route to / (clearing search)
-            // Use replace to avoid history spam, or push? Vite used global search state + replace.
-            const targetPath = value.trim() ? `/?search=${encodeURIComponent(value)}` : '/';
+            // Debounced Navigation
+            if (debounceTimer.current) {
+                clearTimeout(debounceTimer.current);
+            }
 
-            // Only route if we are changing something relevant
-            router.replace(targetPath, { scroll: false });
+            debounceTimer.current = setTimeout(() => {
+                const targetPath = value.trim() ? `/?search=${encodeURIComponent(value)}` : '/';
+                router.replace(targetPath, { scroll: false });
+            }, 300); // 300ms delay
         }
     };
 

@@ -29,6 +29,9 @@ const MovieCast: React.FC<MovieCastProps> = ({ cast }) => {
 
     if (!cast || cast.length === 0) return null;
 
+    // Show all cast members
+    const visibleCast = cast;
+
     return (
         <div
             style={{ position: 'relative' }}
@@ -47,7 +50,7 @@ const MovieCast: React.FC<MovieCastProps> = ({ cast }) => {
                 </h2>
             </div>
 
-            {cast.length > 5 && isHovering && (
+            {visibleCast.length > 5 && isHovering && (
                 <button
                     onClick={() => scroll('left')}
                     style={{
@@ -77,7 +80,7 @@ const MovieCast: React.FC<MovieCastProps> = ({ cast }) => {
                 className="cast-scroll-container"
                 style={{
                     display: 'flex',
-                    gap: '1.5rem',
+                    gap: '3rem', // Increased gap for better spacing
                     width: '100%',
                     overflowX: 'auto',
                     padding: '1rem', // Added padding all around to prevent clipping of scaled items
@@ -87,12 +90,12 @@ const MovieCast: React.FC<MovieCastProps> = ({ cast }) => {
                     WebkitOverflowScrolling: 'touch'
                 }}
             >
-                {cast.map((member, idx) => (
+                {visibleCast.map((member, idx) => (
                     <CastCard key={`${member.name}-${idx}`} member={member} />
                 ))}
             </div>
 
-            {cast.length > 5 && isHovering && (
+            {visibleCast.length > 5 && isHovering && (
                 <button
                     onClick={() => scroll('right')}
                     style={{
@@ -133,10 +136,9 @@ const CastCard: React.FC<{ member: CastMember }> = ({ member }) => {
     return (
         <Link href={personLink} style={{ textDecoration: 'none', color: 'inherit' }}>
             <div
+                className="cast-card"
                 style={{
                     textAlign: 'center',
-                    minWidth: '140px',
-                    flex: '0 0 auto',
                     cursor: 'pointer',
                     position: 'relative',
                     zIndex: isHovered ? 10 : 0
@@ -188,7 +190,7 @@ const CastCard: React.FC<{ member: CastMember }> = ({ member }) => {
                                 opacity: imageLoaded ? 1 : 0,
                                 transition: 'opacity 0.3s ease'
                             }}
-                            unoptimized={!!member.imageUrl.includes('wsrv.nl') || !!member.imageUrl.includes('ui-avatars')}
+                            unoptimized={true}
                         />
                     ) : (
                         <div className="flex-center" style={{ width: '100%', height: '100%', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

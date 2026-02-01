@@ -6,6 +6,9 @@ import PageBackButton from '@/components/PageBackButton';
 export const metadata: Metadata = {
     title: 'Terms of Service - Filmospere',
     description: 'Terms of Service for using Filmospere\'s movie discovery platform.',
+    alternates: {
+        canonical: 'https://filmospere.com/terms'
+    }
 };
 
 export default function TermsPage() {
