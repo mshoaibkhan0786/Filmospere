@@ -6,12 +6,33 @@ import MoviePageClient from '../../../components/MoviePageClient';
 import MovieRelatedSections from '../../../components/MovieRelatedSections';
 import RelatedSectionsSkeleton from '../../../components/RelatedSectionsSkeleton';
 
+import { supabase } from '../../../lib/supabase';
+
 type Props = {
     params: Promise<{ id: string }>
 };
 
 // Enable ISR with 30-day cache
 export const revalidate = 2592000;
+export const dynamicParams = true; // Allow rendering on-demand for paths not generated during build
+
+export async function generateStaticParams() {
+    try {
+        const { data, error } = await supabase
+            .from('movies')
+            .select('data->>slug, data->>id')
+            .order('id', { ascending: false }) // Just an order to get consistent results
+            .limit(10000); // Increased to 10k to pre-build the entire movie database (~9900 items)
+
+        if (error || !data) return [];
+
+        return data.map((movie: any) => ({
+            id: movie.slug || movie.id,
+        }));
+    } catch {
+        return [];
+    }
+}
 
 // SEO Metadata Generator
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -27,7 +48,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
         const title = movie.metaTitle || `${movie.title} (${movie.releaseYear}) - Filmospere`;
         const description = movie.metaDescription || movie.description || `Watch ${movie.title} on Filmospere.`;
-        const image = movie.backdropUrl || movie.posterUrl || '/filmospere-social.png'; // Fallback to a default image if needed
+
+        // FIX: Googlebot blocks wsrv.nl images. We must use the RAW TMDB URL for metadata.
+        // Convert: https://wsrv.nl/?url=https://image.tmdb.org/t/p/original/xyz.jpg -> https://image.tmdb.org/t/p/original/xyz.jpg
+        let image = movie.backdropUrl || movie.posterUrl || '/filmospere-social.png';
+        if (image.includes('wsrv.nl')) {
+            try {
+                const urlObj = new URL(image);
+                const rawUrl = urlObj.searchParams.get('url');
+                if (rawUrl) image = rawUrl;
+            } catch (e) {
+                // Keep original if parsing fails
+            }
+        }
 
         // Manual Content Moderation
         // 1. MATURE CONTENT (Rated 18+, Erotica, Sensitive Themes)

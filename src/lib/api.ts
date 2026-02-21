@@ -117,6 +117,43 @@ export const getHomeData = async (): Promise<{ movies: Movie[], sections: any[] 
 
 import { cache } from 'react';
 
+// Lite selection for list views to massively save Supabase Egress
+export const LITE_SELECT = `
+    id,
+    title:data->>title,
+    slug:data->>slug,
+    posterUrl:data->>posterUrl,
+    poster_path:data->>poster_path,
+    backdropUrl:data->>backdropUrl,
+    images:data->images,
+    releaseYear:data->>releaseYear,
+    duration:data->>duration,
+    rating:data->rating,
+    voteCount:data->voteCount,
+    tags:data->tags,
+    isCopyrightFree:data->isCopyrightFree,
+    contentType:data->>contentType,
+    director:data->>director
+`;
+
+export const mapLiteMovie = (row: any): Movie => ({
+    id: row.id,
+    title: row.title || '',
+    slug: row.slug || '',
+    posterUrl: row.posterUrl || row.poster_path || (row.images && row.images[0]) || '',
+    backdropUrl: row.backdropUrl,
+    images: row.images || (row.backdropUrl ? [row.backdropUrl] : []),
+    releaseYear: row.releaseYear || '',
+    duration: row.duration || '',
+    rating: typeof row.rating === 'number' ? row.rating : Number(row.rating) || 0,
+    voteCount: typeof row.voteCount === 'number' ? row.voteCount : Number(row.voteCount) || 0,
+    tags: row.tags || [],
+    isCopyrightFree: row.isCopyrightFree === 'true' || row.isCopyrightFree === true,
+    contentType: row.contentType || 'movie',
+    director: row.director || '',
+    cast: [] // Omitted for bandwidth
+} as unknown as Movie);
+
 export const getMovieById = cache(async (rawId: string): Promise<Movie | null> => {
     // console.log('debug: getMovieById called with:', rawId);
     try {
@@ -291,7 +328,7 @@ export const getRecommendations = async (currentMovie: Movie): Promise<Movie[]> 
 
         const { data, error } = await supabase
             .from('movies')
-            .select('id, data')
+            .select(LITE_SELECT)
             .neq('id', currentMovie.id)
             .contains('data', { tags: [primaryTag] })
             .limit(40); // Fetch a pool of candidates
@@ -302,13 +339,7 @@ export const getRecommendations = async (currentMovie: Movie): Promise<Movie[]> 
         }
 
         // Map to Movie type
-        const candidates = data.map((row: any) => ({
-            ...row.data,
-            id: row.id,
-            cast: row.data.cast || [],
-            tags: row.data.tags || [],
-            images: row.data.images || (row.data.backdropUrl ? [row.data.backdropUrl] : []),
-        } as Movie));
+        const candidates = data.map((row: any) => mapLiteMovie(row));
 
         // Client-side scoring (same as original algorithm)
         return candidates
@@ -362,7 +393,7 @@ export const getMoviesByTag = async (tag: string, start = 0, count = 20): Promis
 
         const mappedLang = industryMap[normalizedTag];
 
-        const safeSelect = 'id, data';
+        const safeSelect = LITE_SELECT;
         let query = supabase
             .from('movies')
             .select(safeSelect)
@@ -430,13 +461,7 @@ export const getMoviesByTag = async (tag: string, start = 0, count = 20): Promis
             return [];
         }
 
-        return data.map((row: any) => ({
-            ...row.data,
-            id: row.id,
-            cast: row.data.cast || [],
-            tags: row.data.tags || [],
-            images: row.data.images || (row.data.backdropUrl ? [row.data.backdropUrl] : []),
-        } as Movie));
+        return data.map((row: any) => mapLiteMovie(row));
 
     } catch (e) {
         console.error('getMoviesByTag failed:', e);
@@ -448,7 +473,7 @@ export const searchMovies = async (query: string, offset = 0, limit = 20, type: 
     try {
         if (!query.trim()) return { results: [], count: 0 };
 
-        const safeSelect = 'id, data';
+        const safeSelect = LITE_SELECT;
 
         // Initialize promises
         let titleQueryPromise = Promise.resolve({ data: [] as any[], error: null });
@@ -477,7 +502,7 @@ export const searchMovies = async (query: string, offset = 0, limit = 20, type: 
 
         const [titleRes, broadRes] = await Promise.all([titleQueryPromise, broadQueryPromise]);
 
-        const mapMovie = (r: any) => ({ ...r.data, id: r.id } as Movie);
+        const mapMovie = (r: any) => mapLiteMovie(r);
 
         const titleMovies = titleRes.data ? titleRes.data.map(mapMovie) : [];
         const broadMovies = broadRes.data ? broadRes.data.map(mapMovie) : [];
@@ -603,7 +628,7 @@ export const getMoviesByPersonId = async (id: string, start = 0, count = 40): Pr
         // Matches exact object structure in the cast array
         let query = supabase
             .from('movies')
-            .select('id, data')
+            .select(LITE_SELECT)
             .contains('data', { cast: [{ id: targetId }] })
             .order('data->releaseYear', { ascending: false })
             .range(start, start + count - 1);
@@ -619,7 +644,7 @@ export const getMoviesByPersonId = async (id: string, start = 0, count = 40): Pr
             // console.log('[SSR] Attempting fallback text search...');
             const fallbackQuery = supabase
                 .from('movies')
-                .select('id, data')
+                .select(LITE_SELECT)
                 .ilike('data->>cast', `%${targetId}%`)
                 .order('data->releaseYear', { ascending: false })
                 .range(start, start + count - 1);
@@ -630,13 +655,7 @@ export const getMoviesByPersonId = async (id: string, start = 0, count = 40): Pr
 
         if (!data) return [];
 
-        return data.map((row: any) => ({
-            ...row.data,
-            id: row.id,
-            cast: row.data.cast || [],
-            tags: row.data.tags || [],
-            images: row.data.images || (row.data.backdropUrl ? [row.data.backdropUrl] : []),
-        } as Movie));
+        return data.map((row: any) => mapLiteMovie(row));
 
     } catch (e) {
         console.error('getMoviesByPersonId failed:', e);
@@ -660,7 +679,7 @@ export const getMoviesByIds = async (tmdbIds: string[]): Promise<Movie[]> => {
 
         const { data, error } = await supabase
             .from('movies')
-            .select('id, data')
+            .select(LITE_SELECT)
             // Using JSON containment or simple text filter on ID? 
             // Better: use the numeric ID. `data->id` is usually numeric in JSON.
             // Postgres `in` with JSON ->> extraction
@@ -670,13 +689,7 @@ export const getMoviesByIds = async (tmdbIds: string[]): Promise<Movie[]> => {
         if (error || !data) return [];
 
         // Map and ensure uniqueness just in case
-        return data.map((row: any) => ({
-            ...row.data,
-            id: row.id,
-            cast: row.data.cast || [],
-            tags: row.data.tags || [],
-            images: row.data.images || (row.data.backdropUrl ? [row.data.backdropUrl] : []),
-        } as Movie));
+        return data.map((row: any) => mapLiteMovie(row));
 
     } catch (e) {
         console.error('getMoviesByIds failed:', e);
