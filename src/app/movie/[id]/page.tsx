@@ -22,7 +22,7 @@ export async function generateStaticParams() {
             .from('movies')
             .select('data->>slug, data->>id')
             .order('id', { ascending: false }) // Just an order to get consistent results
-            .limit(10000); // Increased to 10k to pre-build the entire movie database (~9900 items)
+            .limit(100); // Reduced from 10k to 100 to prevent Netlify CLI blob upload timeout. The rest leverage ISR on-demand.
 
         if (error || !data) return [];
 
