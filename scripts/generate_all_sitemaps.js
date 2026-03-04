@@ -99,8 +99,12 @@ function generateMoviesSitemaps() {
     let totalMovieUrls = 0;
 
     allMovies.forEach(m => {
-        if (!m.slug && !m.id) return; // Skip invalid
-        const slug = (m.slug || m.id).toString().replace(/\s+/g, '-');
+        if (!m.title && !m.slug) return; // Skip invalid
+        let slug = m.slug;
+        if (!slug) {
+            const titleSlug = m.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            slug = `${titleSlug}-${m.releaseYear || ''}`;
+        }
         const url = `${DOMAIN}/movie/${slug}`;
 
         let priority = '0.6';
@@ -159,13 +163,14 @@ function generatePeopleSitemaps() {
     let totalPeopleUrls = 0;
 
     validPeople.forEach(p => {
-        if (!p.id) return;
+        if (!p.tmdb_id) return;
         const urlPrefix = p.isDirector ? 'director' : 'person';
-        const nameSlug = p.name ? p.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() : 'unknown';
-        const slugPart = `${nameSlug}-${p.id}`;
+        const nameSlug = p.name ? p.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase().replace(/(^-|-$)/g, '') : 'unknown';
+        const cleanId = p.tmdb_id.toString().replace(/tmdb-(person|director)-/, '');
+        const slugPart = `${nameSlug}-${cleanId}`;
         const url = `${DOMAIN}/${urlPrefix}/${slugPart}`;
 
-        currentChunkUrls.push('  <url>\\n    <loc>' + url + '</loc>\\n    <changefreq>monthly</changefreq>\\n    <priority>0.7</priority>\\n  </url>');
+        currentChunkUrls.push('  <url>\n    <loc>' + url + '</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>');
         totalPeopleUrls++;
 
         if (currentChunkUrls.length >= MAX_URLS_PER_SITEMAP) {
@@ -226,7 +231,7 @@ async function generateArticlesSitemap() {
         const urls = allArticles.map(a => {
             const url = `${DOMAIN}/article/${a.slug}`;
             const lastMod = a.updated_at ? a.updated_at.split('T')[0] : new Date().toISOString().split('T')[0];
-            return '  <url>\\n    <loc>' + url + '</loc>\\n    <lastmod>' + lastMod + '</lastmod>\\n    <changefreq>weekly</changefreq>\\n    <priority>0.8</priority>\\n  </url>';
+            return '  <url>\n    <loc>' + url + '</loc>\n    <lastmod>' + lastMod + '</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>';
         });
 
         writeSitemapChunk('sitemap-articles.xml', urls);
