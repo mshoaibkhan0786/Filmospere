@@ -4,15 +4,16 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || '';
 
-  // Block direct access via .netlify.app
-  // This prevents bots from bypassing Cloudflare by hitting the Netlify URL directly
+  // Redirect direct access via .netlify.app
+  // This pushes all traffic to the primary domain immediately
   if (hostname.includes('.netlify.app')) {
-    // Return a lightweight 403 Forbidden response to save Netlify bandwidth
-    return new NextResponse('Access Denied. Please visit https://filmospere.com', {
-      status: 403,
-      headers: {
-        'Content-Type': 'text/plain',
-      },
+    const url = request.nextUrl.clone();
+    url.hostname = 'filmospere.com';
+    url.port = '';
+    url.protocol = 'https:';
+    
+    return NextResponse.redirect(url, {
+      status: 301,
     });
   }
 
