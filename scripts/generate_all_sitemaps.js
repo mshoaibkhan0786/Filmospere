@@ -258,30 +258,17 @@ function generateRouteConfig(movieChunks, peopleChunks) {
     for (let i = 1; i <= movieChunks; i++) xmlChunks.push('sitemap-movies-' + i + '.xml');
     for (let i = 1; i <= peopleChunks; i++) xmlChunks.push('sitemap-people-' + i + '.xml');
 
+    const currentDate = new Date().toISOString();
     const sitemapNodesStr = xmlChunks.map(function (chunk) {
-        return "  <sitemap>\\n    <loc>${baseUrl}/" + chunk + "</loc>\\n    <lastmod>${getFileDate('" + chunk + "')}</lastmod>\\n  </sitemap>";
+        return "  <sitemap>\\n    <loc>${baseUrl}/" + chunk + "</loc>\\n    <lastmod>" + currentDate + "</lastmod>\\n  </sitemap>";
     }).join('\\n');
 
-    const routeCode = `import { NextResponse } from 'next/server';
+const routeCode = `import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const baseUrl = 'https://filmospere.com';
-  const fs = require('fs');
-  const path = require('path');
-
-  const getFileDate = (filename: string) => {
-    try {
-      const filePath = path.join(process.cwd(), 'public', filename);
-      if (fs.existsSync(filePath)) {
-        return fs.statSync(filePath).mtime.toISOString();
-      }
-    } catch (e) {
-      console.error(\`Error reading date for \\\${filename}\`, e);
-    }
-    return new Date().toISOString();
-  };
 
   const xml = \`<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
