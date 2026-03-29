@@ -58,7 +58,8 @@ function generateStaticSitemap() {
         const url = `${DOMAIN}${route}`;
         // Encode URI Component for spaces, but keep slashes
         const encodedUrl = encodeURI(url);
-        return `  <url>\n    <loc>${encodedUrl}</loc>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>`;
+        const today = new Date().toISOString().split('T')[0];
+        return `  <url>\n    <loc>${encodedUrl}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>`;
     });
 
     writeSitemapChunk('sitemap-static.xml', urls);
@@ -111,7 +112,9 @@ function generateMoviesSitemaps() {
         if (m.releaseYear >= 2024 || m.voteCount > 10) priority = '0.9';
         else if (m.releaseYear >= 2020) priority = '0.8';
 
-        currentChunkUrls.push(`  <url>\n    <loc>${url}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>`);
+        const lastMod = m.updated_at ? m.updated_at.split('T')[0] : new Date().toISOString().split('T')[0];
+
+        currentChunkUrls.push(`  <url>\n    <loc>${url}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>`);
         totalMovieUrls++;
 
         if (currentChunkUrls.length >= MAX_URLS_PER_SITEMAP) {
@@ -170,7 +173,9 @@ function generatePeopleSitemaps() {
         const slugPart = `${nameSlug}-${cleanId}`;
         const url = `${DOMAIN}/${urlPrefix}/${slugPart}`;
 
-        currentChunkUrls.push('  <url>\n    <loc>' + url + '</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>');
+        const lastMod = p.updated_at ? p.updated_at.split('T')[0] : new Date().toISOString().split('T')[0];
+
+        currentChunkUrls.push('  <url>\n    <loc>' + url + '</loc>\n    <lastmod>' + lastMod + '</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>');
         totalPeopleUrls++;
 
         if (currentChunkUrls.length >= MAX_URLS_PER_SITEMAP) {
