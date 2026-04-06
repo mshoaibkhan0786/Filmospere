@@ -95,7 +95,7 @@ const WatchOptions: React.FC<WatchOptionsProps> = ({ movie, selectedRegion, user
         const p = platform.toLowerCase();
         if (p.includes('netflix')) return { color: '#E50914', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png' };
         if (p.includes('prime') || p.includes('amazon')) return { color: '#00A8E1', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg' };
-        if (p.includes('hotstar') || p.includes('jiostar')) return { color: '#0f1014', logo: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/JioHotstar_logo.svg', hasWhiteShadow: true, noBorder: true };
+        if (p.includes('hotstar') || p.includes('jiostar')) return { color: '#0f1014', logo: '/jiohotstar.png', hasWhiteShadow: true, noBorder: true };
         if (p.includes('disney')) return { color: '#113CCF', logo: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg' };
         if (p.includes('hulu')) return { color: '#1CE783', logo: 'https://upload.wikimedia.org/wikipedia/commons/e/e4/Hulu_Logo.svg' };
         if (p.includes('hbo') || p.includes('max')) return { color: '#5E26E3', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg' };
