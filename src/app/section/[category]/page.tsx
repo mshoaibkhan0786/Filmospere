@@ -72,17 +72,8 @@ export async function generateStaticParams() {
         'trending',
         'top-rated',
         'new-releases',
-        'action',
-        'comedy',
-        'horror',
-        'science-fiction',
-        'thriller',
-        'romance',
         'web-series',
-        'hollywood',
-        'bollywood',
-        'south-indian',
-        'anime'
+        'action'
     ];
 
     return sections.map((category) => ({
