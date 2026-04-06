@@ -128,7 +128,8 @@ function parseCsv(filePath) {
             description: entries[1],
             link: entries[2],
             mediaUrl: entries[3],
-            board: entries[4]
+            board: entries[4],
+            dateStr: entries[5]
         });
     }
     return pins;
@@ -146,7 +147,7 @@ function parseCsv(filePath) {
     let startIndex = parseInt(ans) - 1;
     if (isNaN(startIndex) || startIndex < 0) startIndex = 0;
 
-    const schedules = getNextSlots(new Date(), pins.length);
+    // We will parse dates dynamically from the CSV
 
     // Persistent Login
     const browser = await puppeteer.launch({
@@ -175,7 +176,22 @@ function parseCsv(filePath) {
 
     for (let i = startIndex; i < pins.length; i++) {
         const pin = pins[i];
-        const sched = schedules[i];
+
+        // Parse dateStr "2026-03-01T17:00+05:30" directly from our updated CSV!
+        let d = new Date(pin.dateStr);
+        let mm = String(d.getMonth() + 1).padStart(2, '0');
+        let dd = String(d.getDate()).padStart(2, '0');
+        let yyyy = d.getFullYear();
+        let schedDate = `${mm}/${dd}/${yyyy}`;
+
+        let h = d.getHours();
+        let ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12;
+        if (h === 0) h = 12;
+        let m = String(d.getMinutes()).padStart(2, '0');
+        let schedTime = `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+
+        const sched = { date: schedDate, time: schedTime };
 
         console.log(`\n[${i + 1}/${pins.length}] ${pin.title}`);
         console.log(`    Target: ${sched.date} @ ${sched.time}`);

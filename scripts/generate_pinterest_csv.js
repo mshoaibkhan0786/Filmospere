@@ -165,14 +165,80 @@ async function generateCsv() {
         if (trending.length === 0 && gems.length === 0) break;
     }
 
-    const finalSelection = selection.slice(0, 150);
+    // --- CALCULATE PINTEREST LIMIT ---
+    let currentTotalPins = 0;
+    if (fs.existsSync(CSV_FILE)) {
+        const existingContent = fs.readFileSync(CSV_FILE, 'utf8');
+        currentTotalPins = Math.max(0, existingContent.trim().split('\n').length - 1); // Subtract header
+    }
+
+    const MAX_PINS = 150;
+    const remainingSlots = MAX_PINS - currentTotalPins;
+
+    console.log(`Current pins scheduled: ${currentTotalPins}. Remaining slots before hitting Pinterest limit: ${remainingSlots}`);
+
+    if (remainingSlots <= 0) {
+        console.log("We have already reached the maximum 30-day Pinterest scheduling limit (150 pins). Aborting generation.");
+        return;
+    }
+
+    const finalSelection = selection.slice(0, remainingSlots);
     console.log(`Selected ${finalSelection.length} movies for processing.`);
 
-    // Start Date: Jan 21, 2026 (Treating UTC as "Wall Clock IST")
-    let currentDate = new Date(Date.UTC(2026, 0, 21));
-    let slotIndex = 0; // 0 to 4
+    // --- DYNAMIC RUN START CALCULATION ---
+    let startYear, startMonth, startDay; // Variables to hold our start date
+    let lastSlotIndex = -1;
+    let currentDate;
 
-    let csvContent = `Title,Description,Link,Image URL,Board Name,Publish Date\n`;
+    // Default Fallback
+    currentDate = new Date(Date.UTC(2026, 0, 21)); // Jan 21, 2026
+
+    if (fs.existsSync(CSV_FILE)) {
+        const existingContent = fs.readFileSync(CSV_FILE, 'utf8');
+        const lines = existingContent.trim().split('\n');
+
+        // Ensure there is at least a header and one row
+        if (lines.length > 1) {
+            const lastLine = lines[lines.length - 1];
+            const lastDateStr = lastLine.substring(lastLine.lastIndexOf(',') + 1); // e.g. "2026-03-09T21:00+05:30"
+
+            // Extract the Date part
+            const dateMatch = lastDateStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+            if (dateMatch) {
+                const year = parseInt(dateMatch[1], 10);
+                const month = parseInt(dateMatch[2], 10) - 1; // 0-indexed month
+                const day = parseInt(dateMatch[3], 10);
+                const hour = parseInt(dateMatch[4], 10);
+
+                // Map the hour back to slotIndex (17, 21, 2, 6, 9)
+                if (hour === 17) lastSlotIndex = 0;
+                else if (hour === 21) lastSlotIndex = 1;
+                else if (hour === 2) lastSlotIndex = 2;
+                else if (hour === 6) lastSlotIndex = 3;
+                else if (hour === 9) lastSlotIndex = 4;
+
+                // If the last slot was 4 (the final of the day), we move to the next day
+                if (lastSlotIndex === 4 || lastSlotIndex === -1) {
+                    // Next day, Slot 0
+                    currentDate = new Date(Date.UTC(year, month, day + 1));
+                    lastSlotIndex = -1; // Ready to start at 0
+                } else {
+                    // Same Day, Next Slot
+                    currentDate = new Date(Date.UTC(year, month, day));
+                    // Check if the previous slot pushed it over midnight visually (slots 2, 3, 4 are 'next day' technically in IST but not UTC depending on setup)
+                    // The script previously uses setUTCDate, so we will just maintain the day.
+                }
+                console.log(`Resuming schedule! Last pin was on ${lastDateStr}.`);
+            }
+        }
+    }
+
+    let slotIndex = lastSlotIndex + 1; // 0 to 4
+
+    let csvContent = "";
+    if (!fs.existsSync(CSV_FILE)) {
+        csvContent = `Title,Description,Link,Image URL,Board Name,Publish Date\n`;
+    }
     let processedCount = 0;
 
     // Use for...of loop to handle async await correctly
@@ -235,7 +301,12 @@ async function generateCsv() {
     }
 
     // Write Files
-    fs.writeFileSync(CSV_FILE, csvContent);
+    // Append Files
+    if (fs.existsSync(CSV_FILE)) {
+        fs.appendFileSync(CSV_FILE, csvContent);
+    } else {
+        fs.writeFileSync(CSV_FILE, csvContent);
+    }
 
     const dir = path.dirname(TRACKER_FILE);
     if (!fs.existsSync(dir)) {

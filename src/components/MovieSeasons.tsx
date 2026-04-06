@@ -19,7 +19,7 @@ const MovieSeasons: React.FC<MovieSeasonsProps> = ({ seasons }) => {
 
     const [selectedSeason, setSelectedSeason] = useState<number>(1);
     const [isSeasonDropdownOpen, setIsSeasonDropdownOpen] = useState(false);
-    const [visibleEpisodes, setVisibleEpisodes] = useState(15);
+    const [visibleEpisodes, setVisibleEpisodes] = useState(5);
     const closeTimeoutRef = useRef<any>(null);
 
     useEffect(() => {
@@ -33,7 +33,7 @@ const MovieSeasons: React.FC<MovieSeasonsProps> = ({ seasons }) => {
     }, [validSeasons]);
 
     useEffect(() => {
-        setVisibleEpisodes(15);
+        setVisibleEpisodes(5);
     }, [selectedSeason]);
 
     if (!validSeasons || validSeasons.length === 0) {
@@ -196,30 +196,53 @@ const MovieSeasons: React.FC<MovieSeasonsProps> = ({ seasons }) => {
                 })}
             </div>
 
-            {currentEpisodes.length > visibleEpisodes && (
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
-                    <button
-                        onClick={() => setVisibleEpisodes(prev => prev + 15)}
-                        style={{
-                            padding: '10px 30px',
-                            backgroundColor: 'transparent',
-                            color: 'white',
-                            border: '1px solid rgba(255,255,255,0.4)',
-                            borderRadius: '50px',
-                            cursor: 'pointer',
-                            fontSize: '0.9rem',
-                            fontWeight: 'bold',
-                            transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={e => {
-                            e.currentTarget.style.borderColor = 'white';
-                        }}
-                        onMouseLeave={e => {
-                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)';
-                        }}
-                    >
-                        Load More
-                    </button>
+            {(currentEpisodes.length > visibleEpisodes || visibleEpisodes > 5) && (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
+                    {currentEpisodes.length > visibleEpisodes && (
+                        <button
+                            onClick={() => setVisibleEpisodes(prev => prev + 5)}
+                            style={{
+                                padding: '10px 30px',
+                                backgroundColor: 'transparent',
+                                color: 'white',
+                                border: '1px solid rgba(255,255,255,0.4)',
+                                borderRadius: '50px',
+                                cursor: 'pointer',
+                                fontSize: '0.9rem',
+                                fontWeight: 'bold',
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.borderColor = 'white'}
+                            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'}
+                        >
+                            Load More
+                        </button>
+                    )}
+
+                    {visibleEpisodes > 5 && (
+                        <button
+                            onClick={() => {
+                                setVisibleEpisodes(5);
+                                // Optional: Smooth scroll back to top of list? 
+                                // For now just collapse.
+                            }}
+                            style={{
+                                padding: '10px 30px',
+                                backgroundColor: 'transparent',
+                                color: 'white',
+                                border: '1px solid rgba(255,255,255,0.4)',
+                                borderRadius: '50px',
+                                cursor: 'pointer',
+                                fontSize: '0.9rem',
+                                fontWeight: 'bold',
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.borderColor = 'white'}
+                            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'}
+                        >
+                            Show Less
+                        </button>
+                    )}
                 </div>
             )}
         </div>
