@@ -9,11 +9,11 @@ dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 // Setup Supabase
 const supabase = createClient(
-    "https://tuspzqzahnlukliyqjbd.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1c3B6cXphaG5sdWtsaXlxamJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2NDIzMTksImV4cCI6MjA4MTIxODMxOX0.frkgaCFseKrDPUprm3OT0m75PzZ9yk-yrgSC9XUifWU"
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const OPENAI_KEY = "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";
+const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
 const OUTPUT_FILE = path.join(__dirname, '../pinterest_next_30_days.csv');
 const OLD_FILE = path.join(__dirname, '../pinterest_bulk_upload.csv');
