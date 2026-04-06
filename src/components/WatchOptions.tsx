@@ -91,25 +91,24 @@ const WatchOptions: React.FC<WatchOptionsProps> = ({ movie, selectedRegion, user
         return map[code] || code;
     };
 
-    // Helper: Platform Config
     const getPlatformConfig = (platform: string) => {
         const p = platform.toLowerCase();
         if (p.includes('netflix')) return { color: '#E50914', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Logonetflix.png' };
-        if (p.includes('prime') || p.includes('amazon')) return { color: '#00A8E1', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Amazon_Prime_Video_logo.svg/512px-Amazon_Prime_Video_logo.svg.png' };
-        if (p.includes('hotstar') || p.includes('jiostar')) return { color: '#0f1014', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/JioHotstar_2025.png/1200px-JioHotstar_2025.png?20250530065522', hasWhiteShadow: true, noBorder: true };
-        if (p.includes('disney')) return { color: '#113CCF', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Disney%2B_logo.svg/2560px-Disney%2B_logo.svg.png' };
-        if (p.includes('hulu')) return { color: '#1CE783', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Hulu_Logo.svg/2560px-Hulu_Logo.svg.png' };
-        if (p.includes('hbo') || p.includes('max')) return { color: '#5E26E3', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/HBO_Max_Logo.svg/2560px-HBO_Max_Logo.svg.png' };
-        if (p.includes('apple')) return { color: '#ffffff', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Apple_TV_Plus_Logo.svg/2560px-Apple_TV_Plus_Logo.svg.png' };
-        if (p.includes('peacock')) return { color: '#000000', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/NBCUniversal_Peacock_Logo.svg/2560px-NBCUniversal_Peacock_Logo.svg.png' };
+        if (p.includes('prime') || p.includes('amazon')) return { color: '#00A8E1', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/11/Amazon_Prime_Video_logo.svg' };
+        if (p.includes('hotstar') || p.includes('jiostar')) return { color: '#0f1014', logo: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/JioHotstar_logo.svg', hasWhiteShadow: true, noBorder: true };
+        if (p.includes('disney')) return { color: '#113CCF', logo: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg' };
+        if (p.includes('hulu')) return { color: '#1CE783', logo: 'https://upload.wikimedia.org/wikipedia/commons/e/e4/Hulu_Logo.svg' };
+        if (p.includes('hbo') || p.includes('max')) return { color: '#5E26E3', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg' };
+        if (p.includes('apple')) return { color: '#ffffff', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg' };
+        if (p.includes('peacock')) return { color: '#000000', logo: 'https://upload.wikimedia.org/wikipedia/commons/d/d3/NBCUniversal_Peacock_Logo.svg' };
         if (p.includes('google')) return { color: '#4285F4', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Google_Play_Arrow_logo.svg/512px-Google_Play_Arrow_logo.svg.png' };
-        if (p.includes('zee5')) return { color: '#8230A8', logo: 'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/zee5-logo.png' };
+        if (p.includes('zee5')) return { color: '#8230A8', logo: 'https://upload.wikimedia.org/wikipedia/commons/6/6a/ZEE5_logo.svg' };
         if (p.includes('vi') || p.includes('vodafone')) return { color: '#ED1C24', logo: '/vi-movies.svg', isVi: true };
-        if (p.includes('jio')) return { color: '#D9008D', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/14/JioCinema_logo.svg/512px-JioCinema_logo.svg.png' };
+        if (p.includes('jio')) return { color: '#D9008D', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/JioCinema_logo.svg/512px-JioCinema_logo.svg.png' };
         if (p.includes('sony')) return { color: '#F99D1C', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Sony_LIV_Logo_2020.svg/512px-Sony_LIV_Logo_2020.svg.png' };
         if (p.includes('lionsgate')) return { color: '#D4AF37', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Lionsgate_Play_logo.svg/512px-Lionsgate_Play_logo.svg.png' };
-        if (p.includes('mubi')) return { color: '#001e62', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/MUBI_logo.svg/512px-MUBI_logo.svg.png' };
-        if (p.includes('youtube')) return { color: '#FF0000', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/YouTube_Logo_2017.svg/2560px-YouTube_Logo_2017.svg.png' };
+        if (p.includes('mubi')) return { color: '#001e62', logo: 'https://upload.wikimedia.org/wikipedia/commons/4/42/MUBI_logo.svg' };
+        if (p.includes('youtube')) return { color: '#FF0000', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg' };
         if (p.includes('mx') && p.includes('player')) return { color: '#0084ff', logo: null };
 
         return { color: '#444', logo: null };
