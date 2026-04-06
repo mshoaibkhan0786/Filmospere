@@ -159,83 +159,35 @@ export const getMovieById = cache(async (rawId: string): Promise<Movie | null> =
     try {
         const id = decodeURIComponent(rawId).trim();
 
-        // 1. Try Exact Match (Slug) - Safe for any string
-        let { data } = await supabase
-            .from('movies')
-            .select('*')
-            .eq('data->>slug', id)
-            .maybeSingle();
+        // Resolve variations
+        const normalized = id.toLowerCase().replace(/:/g, '').replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
+        const spacedTitle = id.replace(/-/g, ' ');
+        const yearMatch = id.match(/-(19|20)\d{2}$/);
+        const cleanSlug = yearMatch ? id.substring(0, yearMatch.index) : null;
 
-        // 2. Try ID Match (Only if it looks like a numeric ID or UUID)
-        if (!data && !id.includes(' ')) {
-            const { data: idData } = await supabase
-                .from('movies')
-                .select('*')
-                .eq('id', id)
-                .maybeSingle();
-            if (idData) data = idData;
-        }
+        // Execute all probable index hits simultaneously to avoid 5x sequential Network RTT latency
+        const [exactSlugRes, idRes, normSlugRes, cleanSlugRes, spacedTitleRes, fuzzyTitleRes] = await Promise.all([
+            // 1. Try Exact Match (Slug)
+            supabase.from('movies').select('*').eq('data->>slug', id).maybeSingle(),
+            // 2. Try ID Match
+            !id.includes(' ') ? supabase.from('movies').select('*').eq('id', id).maybeSingle() : Promise.resolve({ data: null }),
+            // 3. Fallback: Normalize Slug
+            id !== normalized ? supabase.from('movies').select('*').eq('data->>slug', normalized).maybeSingle() : Promise.resolve({ data: null }),
+            // 4. Fallback: Year Stripped
+            cleanSlug ? supabase.from('movies').select('*').eq('data->>slug', cleanSlug).maybeSingle() : Promise.resolve({ data: null }),
+            // 5. Fallback: Smarter Title Match
+            supabase.from('movies').select('*').ilike('data->>title', spacedTitle).maybeSingle(),
+            // 6. Original Fuzzy Title Match
+            id !== spacedTitle ? supabase.from('movies').select('*').ilike('data->>title', id).maybeSingle() : Promise.resolve({ data: null }),
+        ]);
 
-        // 3. Fallback: Normalize Slug (Spaces -> Hyphens)
-        if (!data) {
-            const normalized = id.toLowerCase()
-                .replace(/:/g, '')
-                .replace(/ /g, '-')
-                .replace(/[^a-z0-9-]/g, '');
-
-            const { data: normData } = await supabase
-                .from('movies')
-                .select('*')
-                .eq('data->>slug', normalized)
-                .maybeSingle();
-
-            if (normData) {
-                data = normData;
-            }
-        }
-
-        // 4. ROBUST FALLBACK: URL usually has Year (e.g. "movie-title-2024") but DB might not
-        if (!data) {
-            // Check if it ends with year pattern
-            const yearMatch = id.match(/-(19|20)\d{2}$/);
-            if (yearMatch) {
-                const cleanSlug = id.substring(0, yearMatch.index);
-                console.log(`[getMovieById] Trying stripped year slug: ${cleanSlug}`);
-                const { data: cleanData } = await supabase
-                    .from('movies')
-                    .select('*')
-                    .eq('data->>slug', cleanSlug)
-                    .maybeSingle();
-
-                if (cleanData) data = cleanData;
-            }
-        }
-
-        // 5. Fallback: Smarter Title Match (Hyphens -> Spaces)
-        // Ensure "she-rides-shotgun" matches "She Rides Shotgun"
-        if (!data) {
-            const spacedTitle = id.replace(/-/g, ' ');
-            const { data: titleData } = await supabase
-                .from('movies')
-                .select('*')
-                .ilike('data->>title', spacedTitle)
-                .maybeSingle();
-
-            if (titleData) data = titleData;
-        }
-
-        // 6. Original Fuzzy Title Match (Last Resort DB)
-        if (!data) {
-            const { data: titleData } = await supabase
-                .from('movies')
-                .select('*')
-                .ilike('data->>title', id)
-                .maybeSingle();
-
-            if (titleData) {
-                data = titleData;
-            }
-        }
+        // Prioritize results based on accuracy hierarchy
+        let data = exactSlugRes.data 
+            || idRes.data 
+            || normSlugRes.data 
+            || cleanSlugRes.data 
+            || spacedTitleRes.data 
+            || fuzzyTitleRes.data;
 
         // 7. SERVER-SIDE JSON FILE FALLBACK (Critical for Stability)
         // If DB fails or returns nothing, check local files (public/movies_partX.json)
