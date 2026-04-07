@@ -101,7 +101,7 @@ const WatchOptions: React.FC<WatchOptionsProps> = ({ movie, selectedRegion, user
         if (p.includes('hbo') || p.includes('max')) return { color: '#5E26E3', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg' };
         if (p.includes('apple')) return { color: '#ffffff', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/28/Apple_TV_Plus_Logo.svg' };
         if (p.includes('peacock')) return { color: '#000000', logo: 'https://upload.wikimedia.org/wikipedia/commons/d/d3/NBCUniversal_Peacock_Logo.svg' };
-        if (p.includes('google')) return { color: '#4285F4', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Google_Play_Arrow_logo.svg/512px-Google_Play_Arrow_logo.svg.png' };
+        if (p.includes('google')) return { color: '#4285F4', logo: '/google-play.svg' };
         if (p.includes('zee5')) return { color: '#8230A8', logo: 'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/zee5-logo.png' };
         if (p.includes('vi') || p.includes('vodafone')) return { color: '#ED1C24', logo: '/vi-movies.svg', isVi: true };
         if (p.includes('jio')) return { color: '#D9008D', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/JioCinema_logo.svg/512px-JioCinema_logo.svg.png' };
