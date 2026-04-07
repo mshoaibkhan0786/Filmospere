@@ -142,14 +142,14 @@ export default async function MoviePage({ params }: Props) {
     // 1. Fetch Critical Data (Blocking)
     // Only fetch the main movie details + sidebar articles. 
     // This allows the page to paint "Above the Fold" content (Hero, Info) instantly.
-    const [movie, articles] = await Promise.all([
-        getMovieById(id),
-        getArticlesByMovieId(id)
-    ]);
-
+    const movie = await getMovieById(id);
+    
     if (!movie) {
         notFound();
     }
+
+    // Pass the actual movie DB ID, not the raw URL string slug
+    const articles = await getArticlesByMovieId(movie.id);
 
     return (
         <MoviePageClient

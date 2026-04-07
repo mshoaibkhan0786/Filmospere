@@ -31,6 +31,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onClick, priority = false 
     return (
         <Link
             href={movieUrl}
+            prefetch={false}
             className="movie-card group relative flex flex-col gap-2 w-full min-w-0 no-underline transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] hover:scale-110 hover:z-10 focus:scale-110 focus:z-10 outline-none"
         >
             <div className="w-full aspect-[2/3] relative bg-[#2a2a2a] rounded-lg overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.2)] group-hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)] group-focus:shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
