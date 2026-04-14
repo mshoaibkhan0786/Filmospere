@@ -15,8 +15,16 @@ async function submitIndexNow() {
         const urlMatches = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)];
         let sitemapUrls = urlMatches.map(match => match[1]);
         
+        // Shuffle the movie URLs so Bing gets a different batch every day
+        for (let i = sitemapUrls.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [sitemapUrls[i], sitemapUrls[j]] = [sitemapUrls[j], sitemapUrls[i]];
+        }
+        
+        let urlsToSubmit = sitemapUrls.slice(0, 10);
+        
         // Add static URLs too
-        sitemapUrls.unshift(
+        urlsToSubmit.unshift(
             'https://filmospere.com/',
             'https://filmospere.com/articles',
             'https://filmospere.com/section/trending',
@@ -24,8 +32,6 @@ async function submitIndexNow() {
             'https://filmospere.com/section/latest%20movies%20%26%20series'
         );
 
-        // IndexNow limits to 10,000 URLs per request
-        const urlsToSubmit = sitemapUrls.slice(0, 10000);
         console.log(`Prepared ${urlsToSubmit.length} URLs for IndexNow submission.`);
 
         const data = JSON.stringify({
