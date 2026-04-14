@@ -533,7 +533,8 @@ export const getPersonById = async (id: string): Promise<any | null> => {
         if (!tmdbId && searchName) {
             // Basic Search to resolve ID
             const res = await fetch(`https://api.themoviedb.org/3/search/person?query=${encodeURIComponent(searchName)}`, {
-                headers: { Authorization: `Bearer ${TMDB_READ_TOKEN}`, accept: 'application/json' }
+                headers: { Authorization: `Bearer ${TMDB_READ_TOKEN}`, accept: 'application/json' },
+                cache: 'no-store'
             });
             const data = await res.json();
             if (data.results && data.results.length > 0) {
@@ -543,7 +544,8 @@ export const getPersonById = async (id: string): Promise<any | null> => {
 
         if (tmdbId) {
             const res = await fetch(`https://api.themoviedb.org/3/person/${tmdbId}?append_to_response=images,movie_credits,external_ids`, {
-                headers: { Authorization: `Bearer ${TMDB_READ_TOKEN}`, accept: 'application/json' }
+                headers: { Authorization: `Bearer ${TMDB_READ_TOKEN}`, accept: 'application/json' },
+                cache: 'no-store'
             });
 
             if (!res.ok) return null;
