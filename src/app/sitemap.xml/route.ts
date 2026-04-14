@@ -4,10 +4,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const baseUrl = 'https://filmospere.com';
+  const lastmod = new Date().toISOString();
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap>\n    <loc>${baseUrl}/sitemap-static.xml</loc>\n    <lastmod>2026-03-29T09:03:43.495Z</lastmod>\n  </sitemap>\n  <sitemap>\n    <loc>${baseUrl}/sitemap-articles.xml</loc>\n    <lastmod>2026-03-29T09:03:43.495Z</lastmod>\n  </sitemap>\n  <sitemap>\n    <loc>${baseUrl}/sitemap-movies-1.xml</loc>\n    <lastmod>2026-03-29T09:03:43.495Z</lastmod>\n  </sitemap>\n  <sitemap>\n    <loc>${baseUrl}/sitemap-people-1.xml</loc>\n    <lastmod>2026-03-29T09:03:43.495Z</lastmod>\n  </sitemap>
+  <sitemap>\n    <loc>${baseUrl}/sitemap-static.xml</loc>\n    <lastmod>${lastmod}</lastmod>\n  </sitemap>\n  <sitemap>\n    <loc>${baseUrl}/sitemap-articles.xml</loc>\n    <lastmod>${lastmod}</lastmod>\n  </sitemap>\n  <sitemap>\n    <loc>${baseUrl}/sitemap-movies-1.xml</loc>\n    <lastmod>${lastmod}</lastmod>\n  </sitemap>\n  <sitemap>\n    <loc>${baseUrl}/sitemap-people-1.xml</loc>\n    <lastmod>${lastmod}</lastmod>\n  </sitemap>
 </sitemapindex>`;
 
   return new NextResponse(xml, {

@@ -16,11 +16,17 @@ async function fetchLatestUrls() {
         
         // Match all <loc> tags
         const urlMatches = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)];
-        const urls = urlMatches.map(match => match[1]);
+        let urls = urlMatches.map(match => match[1]);
+        
+        // Shuffle the array so we index different URLs every day
+        for (let i = urls.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [urls[i], urls[j]] = [urls[j], urls[i]];
+        }
         
         // Google Indexing API allows max 200 requests per batch/day for new accounts
         const urlsToSubmit = urls.slice(0, 200);
-        console.log(`Found ${urls.length} URLs in sitemap. Taking the first ${urlsToSubmit.length} for today.`);
+        console.log(`Found ${urls.length} URLs in sitemap. Randomly selecting 200 for today.`);
         return urlsToSubmit;
     } catch (error) {
         console.error('Error fetching sitemap:', error);
