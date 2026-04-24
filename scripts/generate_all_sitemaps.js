@@ -112,9 +112,9 @@ function generateMoviesSitemaps() {
         if (m.releaseYear >= 2024 || m.voteCount > 10) priority = '0.9';
         else if (m.releaseYear >= 2020) priority = '0.8';
 
-        const lastMod = m.updated_at ? m.updated_at.split('T')[0] : new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split('T')[0];
 
-        currentChunkUrls.push(`  <url>\n    <loc>${url}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>`);
+        currentChunkUrls.push(`  <url>\n    <loc>${url}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>\n  </url>`);
         totalMovieUrls++;
 
         if (currentChunkUrls.length >= MAX_URLS_PER_SITEMAP) {
@@ -173,9 +173,9 @@ function generatePeopleSitemaps() {
         const slugPart = `${nameSlug}-${cleanId}`;
         const url = `${DOMAIN}/${urlPrefix}/${slugPart}`;
 
-        const lastMod = p.updated_at ? p.updated_at.split('T')[0] : new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split('T')[0];
 
-        currentChunkUrls.push('  <url>\n    <loc>' + url + '</loc>\n    <lastmod>' + lastMod + '</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>');
+        currentChunkUrls.push('  <url>\n    <loc>' + url + '</loc>\n    <lastmod>' + today + '</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>');
         totalPeopleUrls++;
 
         if (currentChunkUrls.length >= MAX_URLS_PER_SITEMAP) {
@@ -217,7 +217,7 @@ async function generateArticlesSitemap() {
         while (true) {
             const { data, error } = await supabase
                 .from('articles')
-                .select('slug, updated_at')
+                .select('slug, created_at')
                 .eq('is_published', true)
                 .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
@@ -235,7 +235,7 @@ async function generateArticlesSitemap() {
 
         const urls = allArticles.map(a => {
             const url = `${DOMAIN}/article/${a.slug}`;
-            const lastMod = a.updated_at ? a.updated_at.split('T')[0] : new Date().toISOString().split('T')[0];
+            const lastMod = a.created_at ? a.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
             return '  <url>\n    <loc>' + url + '</loc>\n    <lastmod>' + lastMod + '</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>';
         });
 
@@ -263,21 +263,17 @@ function generateRouteConfig(movieChunks, peopleChunks) {
     for (let i = 1; i <= movieChunks; i++) xmlChunks.push('sitemap-movies-' + i + '.xml');
     for (let i = 1; i <= peopleChunks; i++) xmlChunks.push('sitemap-people-' + i + '.xml');
 
-    const currentDate = new Date().toISOString();
-    const sitemapNodesStr = xmlChunks.map(function (chunk) {
-        return "  <sitemap>\\n    <loc>${baseUrl}/" + chunk + "</loc>\\n    <lastmod>" + currentDate + "</lastmod>\\n  </sitemap>";
-    }).join('\\n');
-
 const routeCode = `import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const baseUrl = 'https://filmospere.com';
+  const currentDate = new Date().toISOString();
 
   const xml = \`<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${sitemapNodesStr}
+${xmlChunks.map(chunk => `  <sitemap>\n    <loc>\${baseUrl}/${chunk}</loc>\n    <lastmod>\${currentDate}</lastmod>\n  </sitemap>`).join('\n')}
 </sitemapindex>\`;
 
   return new NextResponse(xml, {
