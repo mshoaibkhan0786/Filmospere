@@ -268,12 +268,9 @@ const routeCode = `import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const baseUrl = 'https://filmospere.com';
-  const currentDate = new Date().toISOString();
-
   const xml = \`<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${xmlChunks.map(chunk => `  <sitemap>\n    <loc>\${baseUrl}/${chunk}</loc>\n    <lastmod>\${currentDate}</lastmod>\n  </sitemap>`).join('\n')}
+${xmlChunks.map(chunk => `  <sitemap>\n    <loc>https://filmospere.com/${chunk}</loc>\n    <lastmod>${new Date().toISOString()}</lastmod>\n  </sitemap>`).join('\n')}
 </sitemapindex>\`;
 
   return new NextResponse(xml, {

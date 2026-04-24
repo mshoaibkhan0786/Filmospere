@@ -3,26 +3,23 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const baseUrl = 'https://filmospere.com';
-  const currentDate = new Date().toISOString();
-
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>${baseUrl}/sitemap-static.xml</loc>
-    <lastmod>${currentDate}</lastmod>
+    <loc>https://filmospere.com/sitemap-static.xml</loc>
+    <lastmod>2026-04-24T05:10:46.508Z</lastmod>
   </sitemap>
   <sitemap>
-    <loc>${baseUrl}/sitemap-articles.xml</loc>
-    <lastmod>${currentDate}</lastmod>
+    <loc>https://filmospere.com/sitemap-articles.xml</loc>
+    <lastmod>2026-04-24T05:10:46.508Z</lastmod>
   </sitemap>
   <sitemap>
-    <loc>${baseUrl}/sitemap-movies-1.xml</loc>
-    <lastmod>${currentDate}</lastmod>
+    <loc>https://filmospere.com/sitemap-movies-1.xml</loc>
+    <lastmod>2026-04-24T05:10:46.508Z</lastmod>
   </sitemap>
   <sitemap>
-    <loc>${baseUrl}/sitemap-people-1.xml</loc>
-    <lastmod>${currentDate}</lastmod>
+    <loc>https://filmospere.com/sitemap-people-1.xml</loc>
+    <lastmod>2026-04-24T05:10:46.508Z</lastmod>
   </sitemap>
 </sitemapindex>`;
 
