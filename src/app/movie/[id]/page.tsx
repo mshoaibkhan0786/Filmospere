@@ -5,6 +5,7 @@ import { getMovieById, getArticlesByMovieId } from '../../../lib/api';
 import MoviePageClient from '../../../components/MoviePageClient';
 import MovieRelatedSections from '../../../components/MovieRelatedSections';
 import RelatedSectionsSkeleton from '../../../components/RelatedSectionsSkeleton';
+import MovieArticlesSidebar from '../../../components/MovieArticlesSidebar';
 
 import { supabase } from '../../../lib/supabase';
 
@@ -148,15 +149,17 @@ export default async function MoviePage({ params }: Props) {
         notFound();
     }
 
-    // Pass the actual movie DB ID, not the raw URL string slug
-    const articles = await getArticlesByMovieId(movie.id);
-
     return (
         <MoviePageClient
             movie={movie}
             recommendations={[]} // Now streamed via children
-            articles={articles}
+            articles={[]}        // Decoupled, streamed via sidebarSlot
             extraSections={[]}   // Now streamed via children
+            sidebarSlot={
+                <Suspense fallback={<div style={{ height: '200px' }} />} >
+                    <MovieArticlesSidebar movieId={movie.id} />
+                </Suspense>
+            }
         >
             {/* 2. Stream Related Content (Non-Blocking) */}
             <Suspense fallback={<RelatedSectionsSkeleton movie={movie} />}>

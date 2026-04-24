@@ -61,6 +61,7 @@ export const viewport: Viewport = {
 };
 
 import { MovieProvider } from "../context/MovieContext";
+import NextTopLoader from 'nextjs-toploader';
 
 export default function RootLayout({
   children,
@@ -70,6 +71,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} ${inter.variable}`}>
+        <NextTopLoader
+          color="#e50914"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #e50914,0 0 5px #e50914"
+        />
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>
             <Script

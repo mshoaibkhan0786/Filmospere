@@ -7,22 +7,22 @@ const SITEMAP_URL = 'https://filmospere.com/sitemap-movies-1.xml';
 async function submitIndexNow() {
     try {
         console.log(`Fetching sitemap from ${SITEMAP_URL}...`);
-        
+
         // Polyfill fetch for node environments without raw Node fetch
         const response = await fetch(SITEMAP_URL);
         const xml = await response.text();
-        
+
         const urlMatches = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)];
         let sitemapUrls = urlMatches.map(match => match[1]);
-        
+
         // Shuffle the movie URLs so Bing gets a different batch every day
         for (let i = sitemapUrls.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [sitemapUrls[i], sitemapUrls[j]] = [sitemapUrls[j], sitemapUrls[i]];
         }
-        
+
         let urlsToSubmit = sitemapUrls.slice(0, 10);
-        
+
         // Add static URLs too
         urlsToSubmit.unshift(
             'https://filmospere.com/',
