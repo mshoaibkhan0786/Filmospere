@@ -189,45 +189,12 @@ export const getMovieById = cache(async (rawId: string): Promise<Movie | null> =
             || spacedTitleRes.data 
             || fuzzyTitleRes.data;
 
-        // 7. SERVER-SIDE JSON FILE FALLBACK (Critical for Stability)
-        // If DB fails or returns nothing, check local files (public/movies_partX.json)
-        // This mimics the client-side backup logic but ensures SSR doesn't 404.
+        // 7. EDGE-COMPATIBLE FALLBACK (Static Data via DB or fetch)
+        // If DB fails or returns nothing, we used to read local JSON files.
+        // On Edge runtime (Cloudflare Pages), 'fs' is unavailable. 
+        // For now, return null to let the 404/client handle it, or we could fetch from a CDN.
         if (!data) {
-            console.warn(`[getMovieById] DB lookup failed for '${id}'. Attempting local JSON fallback...`);
-            try {
-                const fs = await import('fs');
-                const path = await import('path');
-
-                // Check all 3 parts
-                for (let i = 1; i <= 3; i++) {
-                    const filePath = path.join(process.cwd(), 'public', `movies_part${i}.json`);
-                    if (fs.existsSync(filePath)) {
-                        const fileContent = fs.readFileSync(filePath, 'utf-8');
-                        const movies = JSON.parse(fileContent);
-
-                        // Search in this chunk
-                        // Try exact slug, ID, or fuzzy title
-                        const found = movies.find((m: any) =>
-                            (m.slug === id) ||
-                            (m.id === id) ||
-                            (m.slug === id.toLowerCase().replace(/ /g, '-')) ||
-                            (m.title && m.title.toLowerCase() === id.replace(/-/g, ' ').toLowerCase())
-                        );
-
-                        if (found) {
-                            console.log(`[getMovieById] Found in local backup (part${i}): ${found.title}`);
-                            // Mock the DB response structure
-                            data = {
-                                id: found.id || id, // Ensure ID exists
-                                data: found
-                            };
-                            break; // Stop looking
-                        }
-                    }
-                }
-            } catch (fsErr) {
-                console.error('[getMovieById] Local file fallback failed:', fsErr);
-            }
+            console.warn(`[getMovieById] DB lookup failed for '${id}'. No local JSON fallback available on Edge.`);
         }
 
         if (!data) {
