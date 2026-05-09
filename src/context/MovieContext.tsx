@@ -716,7 +716,7 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
             const mappedLang = industryMap[tag] || industryMap[Object.keys(industryMap).find(k => k.toLowerCase() === normalizedTag) || ''];
 
-            let query = supabase
+            let query: any = (supabase as any)
                 .from('movies')
                 .select('id, data->title, data->posterUrl, data->rating, data->releaseYear, data->slug, data->contentType, data->voteCount, data->tags, data->duration, data->description, data->backdropUrl')
                 .not('data->>posterUrl', 'is', null)
