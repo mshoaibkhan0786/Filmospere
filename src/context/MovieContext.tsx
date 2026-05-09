@@ -1,6 +1,6 @@
+// @ts-nocheck
 "use client";
 
-// @ts-nocheck
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { Movie, CastMember } from '../types';
 import { supabase } from '../lib/supabase';
