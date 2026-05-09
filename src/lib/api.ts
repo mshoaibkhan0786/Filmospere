@@ -313,7 +313,7 @@ export const getMoviesByTag = async (tag: string, start = 0, count = 20): Promis
         const mappedLang = industryMap[normalizedTag];
 
         const safeSelect = LITE_SELECT;
-        let query: any = supabase
+        let query: any = (supabase as any)
             .from('movies')
             .select(safeSelect)
             .not('data->>posterUrl', 'is', null)
