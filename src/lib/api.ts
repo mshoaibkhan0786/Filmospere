@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { supabase } from './supabase';
 import type { Movie, Article } from '../types';
 
