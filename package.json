@@ -4,14 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && npm run build:worker",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "ping:bing": "node scripts/submit-indexnow.js",
     "ping:google": "node scripts/force-google-index.js",
-    "build:worker": "opennextjs-cloudflare build",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "build:worker": "opennextjs-cloudflare",
+    "preview": "npm run build:worker && wrangler pages dev",
+    "deploy": "npm run build:worker && wrangler pages deploy"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
