@@ -452,10 +452,10 @@ export const searchMovies = async (query: string, offset = 0, limit = 20, type: 
 };
 
 // TMDB API Configuration - Token from environment variable
-const TMDB_READ_TOKEN = process.env.TMDB_READ_TOKEN;
+const TMDB_READ_TOKEN = process.env.TMDB_READ_TOKEN || '';
 
 if (!TMDB_READ_TOKEN) {
-    throw new Error('TMDB_READ_TOKEN environment variable is not set. Please add it to .env.local');
+    console.warn('⚠️ TMDB_READ_TOKEN environment variable is not set. TMDB API calls will fail.');
 }
 
 export const getPersonById = async (id: string): Promise<any | null> => {
