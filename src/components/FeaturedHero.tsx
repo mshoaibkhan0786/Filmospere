@@ -154,7 +154,7 @@ const FeaturedHero: React.FC<FeaturedHeroProps> = ({ movie }) => {
                         overflow: 'hidden',
                         textShadow: '1px 2px 4px rgba(0,0,0,0.8)'
                     }}>
-                        {movie.description}
+                        {movie.description || movie.overview || (movie as any).data?.description || (movie as any).data?.overview || ''}
                     </p>
 
                     {/* Buttons */}

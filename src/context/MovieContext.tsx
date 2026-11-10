@@ -158,133 +158,24 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     .filter((s: any) => s.type === 'custom' && s.query && s.visible)
                     .map((s: any) => s.query!);
 
-                // 0. CACHE FIRST STRATEGY (Instant Load)
-                const { data: cacheData, error: cacheError } = await supabase
-                    .from('home_cache')
-                    .select('content')
-                    .eq('id', 'home_feed')
-                    .single();
-
-                if (cacheData && cacheData.content && !cacheError) {
-                    // console.log('⚡ Using Cached Home Feed');
-                    const cachedSections = (cacheData.content as any).sections || [];
-                    const cachedMovies: Movie[] = [];
-                    const cachedSeenIds = new Set<string>();
-
-                    cachedSections.forEach((section: any) => {
-                        if (section.data) {
-                            section.data.forEach((m: any) => {
-                                if (!cachedSeenIds.has(m.id)) {
-                                    cachedSeenIds.add(m.id);
-                                    cachedMovies.push({
-                                        id: m.id,
-                                        title: m.title || m.name || '',
-                                        posterUrl: m.posterUrl || '',
-                                        rating: m.rating || 0,
-                                        releaseYear: m.releaseYear,
-                                        duration: m.duration,
-                                        tags: m.tags,
-                                        slug: m.slug,
-                                        contentType: m.contentType,
-                                        voteCount: m.voteCount,
-                                        // Defaults for cached items (lightweight)
-                                        cast: [],
-                                        streamingLinks: [],
-                                        whyWatch: [],
-                                        isCopyrightFree: false,
-                                        images: m.images || (m.backdropUrl ? [m.backdropUrl] : []),
-                                        description: m.description || '',
-                                        director: m.director || 'Unknown',
-                                        backdropUrl: m.backdropUrl,
-                                        views: 0
-                                    } as Movie);
-                                }
-                            });
-                        }
-                    });
-
-                    if (cachedMovies.length > 0) {
-                        setMovies(cachedMovies);
-                        setIsLoading(false); // Instant Paint
-
-                        // Trigger Background Lazy Load (Genres)
-                        // We duplicate this block here to ensure it runs even when we return early
-                        setTimeout(async () => {
-                            const genrePromises = tagsToFetch.map(tag => {
-                                let searchTag = tag;
-                                if (tag === 'Science Fiction') searchTag = 'Sci-Fi';
-                                if (tag === 'Sci-Fi') searchTag = 'Science Fiction';
-
-                                return supabase
-                                    .from('movies')
-                                    .select('id, data->title, data->posterUrl, data->rating, data->releaseYear, data->slug, data->contentType, data->voteCount, data->tags, data->duration, data->description, data->backdropUrl')
-                                    .contains('data', { tags: [searchTag] })
-                                    .limit(12);
-                            });
-
-                            const genreResults = await Promise.all(genrePromises);
-                            const lazyMovies: Movie[] = [];
-
-                            genreResults.forEach(res => {
-                                if (res.data) {
-                                    res.data.forEach((row: any) => {
-                                        if (!cachedSeenIds.has(row.id)) {
-                                            lazyMovies.push({
-                                                ...row,
-                                                id: row.id
-                                            } as unknown as Movie);
-                                            cachedSeenIds.add(row.id);
-                                        }
-                                    });
-                                }
-                            });
-
-                            if (lazyMovies.length > 0) {
-                                setMovies(prev => {
-                                    const existingIds = new Set(prev.map(m => m.id));
-                                    const uniqueNew = lazyMovies.filter(m => !existingIds.has(m.id));
-                                    return [...prev, ...uniqueNew];
-                                });
-                            }
-                        }, 100);
-
-                        return; // EXIT EARLY - Skip Heavy DB logic
-                    }
-                }
-
-                // 2. Prepare Fetch Promises (Fallback)
-                // Reverting to select('*') to fix 500 Internal Server Errors on Supabase
-
-                // A. Base Popular (Top 50)
+                // 2. Query movies table directly (home_cache has been removed)
                 // A. Base Popular (Top 50)
                 const p1 = supabase.from('movies')
                     .select('id, data')
-                    .not('data->>posterUrl', 'is', null)
-                    .neq('data->>posterUrl', 'N/A')
-                    .neq('data->>posterUrl', '')
                     .order('data->voteCount', { ascending: false })
                     .limit(50);
 
                 // B. Latest (Top 50)
-                // B. Latest (Top 50)
                 const p2 = supabase.from('movies')
                     .select('id, data')
-                    .not('data->>posterUrl', 'is', null)
-                    .neq('data->>posterUrl', 'N/A')
-                    .neq('data->>posterUrl', '')
                     .order('data->releaseYear', { ascending: false })
                     .order('data->voteCount', { ascending: false })
                     .limit(50);
 
                 // C. Series (Top 50)
-                // C. Series (Top 50)
                 const p3 = supabase.from('movies')
                     .select('id, data')
-                    .eq('data->>contentType', 'series')
-                    .not('data->>posterUrl', 'is', null)
-                    .neq('data->>posterUrl', 'N/A')
-                    .neq('data->>posterUrl', '')
-                    .order('data->voteCount', { ascending: false })
+                    .contains('data', { contentType: 'series' })
                     .limit(50);
 
                 // 3. Execute Core Fetch First (Parallel)
@@ -306,7 +197,9 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                             const mData = row.data || {};
                             newMovies.push({
                                 ...mData,
-                                id: row.id
+                                id: row.id,
+                                description: mData.description || mData.overview || '',
+                                overview: mData.overview || mData.description || '',
                             } as unknown as Movie);
                         }
                     });
@@ -318,7 +211,6 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
                 // 5. Initial Paint
                 setMovies([...newMovies]);
-                // Removed early setIsLoading(false) to prevent UI jump. Waiting for full shuffle.
 
                 // 6. Background Fetch: Get the Genre Sections (Lazy Load)
                 setTimeout(async () => {

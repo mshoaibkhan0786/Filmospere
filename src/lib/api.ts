@@ -4,66 +4,9 @@ import type { Movie, Article } from '../types';
 
 export const getHomeData = async (): Promise<{ movies: Movie[], sections: any[] }> => {
     try {
-        // 1. Try Cache First
-        const { data: cacheData, error: cacheError } = await supabase
-            .from('home_cache')
-            .select('content')
-            .eq('id', 'home_feed')
-            .maybeSingle();
-
-        if (cacheData && cacheData.content && !cacheError) {
-            const rawSections = (cacheData.content as any).sections || [];
-            const cachedMovies: Movie[] = [];
-            const seenIds = new Set<string>();
-
-            // Normalize sections to ensure every movie object has valid fields (posterUrl, etc.)
-            const cachedSections = rawSections.map((section: any) => {
-                if (section.data && Array.isArray(section.data)) {
-                    const cleanedData = section.data.map((m: any) => ({
-                        ...m,
-                        id: m.id,
-                        title: m.title || m.name || m.data?.title || '',
-                        // Robust poster fallback: try standard, then TMDB, then first image, then nested
-                        posterUrl: m.posterUrl || '',
-                        cast: m.cast || [],
-                        tags: m.tags || [],
-                        rating: m.rating || 0,
-                        voteCount: m.voteCount || 0,
-                        images: m.images || (m.backdropUrl ? [m.backdropUrl] : []),
-                        data: undefined // Clean up
-                    }));
-                    return { ...section, data: cleanedData };
-                }
-                return section;
-            });
-
-            // Collect unique movies for the main list
-            cachedSections.forEach((section: any) => {
-                if (section.data) {
-                    section.data.forEach((m: Movie) => {
-                        if (!seenIds.has(m.id)) {
-                            seenIds.add(m.id);
-                            cachedMovies.push(m);
-                        }
-                    });
-                }
-            });
-
-            if (cachedMovies.length > 0) {
-                return { movies: cachedMovies, sections: cachedSections };
-            }
-        }
-    } catch (cacheErr) {
-        console.warn('Home cache read error:', cacheErr);
-    }
-
-    // 2. Fallback: Fetch Core Lists
-    console.log('⚠️ Home Cache Miss - Fetching from DB');
-
-    try {
         const safeSelect = LITE_SELECT;
 
-        // Execute queries safely
+        // Directly query movies table (home_cache has been removed)
         const [s1, s2, s3] = await Promise.all([
             supabase.from('movies').select(safeSelect).order('data->voteCount', { ascending: false }).limit(30),
             supabase.from('movies').select(safeSelect).order('data->releaseYear', { ascending: false }).order('data->voteCount', { ascending: false }).limit(30),
@@ -113,6 +56,8 @@ export const LITE_SELECT = `
     id,
     title:data->>title,
     slug:data->>slug,
+    description:data->>description,
+    overview:data->>overview,
     posterUrl:data->>posterUrl,
     poster_path:data->>poster_path,
     backdropUrl:data->>backdropUrl,
@@ -124,7 +69,6 @@ export const LITE_SELECT = `
     rating:data->rating,
     vote_average:data->rating,
     voteCount:data->voteCount,
-    overview:data->>description,
     tags:data->tags,
     isCopyrightFree:data->isCopyrightFree,
     contentType:data->>contentType,
@@ -135,6 +79,8 @@ export const mapLiteMovie = (row: any): Movie => ({
     id: row.id,
     title: row.title || row.data?.title || '',
     slug: row.slug || row.data?.slug || '',
+    description: row.description || row.overview || row.data?.description || row.data?.overview || '',
+    overview: row.overview || row.description || row.data?.overview || row.data?.description || '',
     posterUrl: row.posterUrl || row.poster_path || (row.images && row.images[0]) || row.data?.posterUrl || '',
     backdropUrl: row.backdropUrl || row.backdrop_path || row.data?.backdropUrl,
     images: (row.images || (row.backdropUrl ? [row.backdropUrl] : [])).slice(0, 12),

@@ -67,6 +67,7 @@ export interface PartialMovie {
     isCopyrightFree: boolean;
     images?: string[]; // For Featured Hero banner
     description?: string; // For Featured Hero
+    overview?: string;
     backdropUrl?: string;
     contentType?: 'movie' | 'series'; // For icon or routing
 }
