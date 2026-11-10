@@ -158,7 +158,14 @@ export const mapLiteMovie = (row: any): Movie => ({
 export const getMovieById = cache(async (rawId: string): Promise<Movie | null> => {
     // console.log('debug: getMovieById called with:', rawId);
     try {
-        const id = decodeURIComponent(rawId).trim();
+        if (!rawId || typeof rawId !== 'string') return null;
+        let id = rawId.trim();
+        try {
+            id = decodeURIComponent(rawId).trim();
+        } catch {
+            // Fallback to untransformed rawId if decoding fails
+        }
+        if (!id) return null;
 
         // Resolve variations
         const normalized = id.toLowerCase().replace(/:/g, '').replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
@@ -460,6 +467,7 @@ if (!TMDB_READ_TOKEN) {
 
 export const getPersonById = async (id: string): Promise<any | null> => {
     try {
+        if (!id || typeof id !== 'string') return null;
         // Helper to extract numeric ID
         const getTmdbId = (fullId: string) => {
             const match = fullId.match(/-(\d+)$/) || fullId.match(/^(\d+)$/);
@@ -471,7 +479,11 @@ export const getPersonById = async (id: string): Promise<any | null> => {
 
         // Handle Director ID format
         if (!tmdbId && id.startsWith('director-')) {
-            searchName = decodeURIComponent(id.replace('director-', ''));
+            try {
+                searchName = decodeURIComponent(id.replace('director-', ''));
+            } catch {
+                searchName = id.replace('director-', '');
+            }
             // Try to find director ID via search if mostly unknown
         }
 
@@ -538,6 +550,7 @@ export const getPersonById = async (id: string): Promise<any | null> => {
 
 export const getMoviesByPersonId = async (id: string, start = 0, count = 40): Promise<Movie[]> => {
     try {
+        if (!id || typeof id !== 'string') return [];
         // MATCHING VITE IMPLEMENTATION EXACTLY
         const match = id.match(/-(\d+)$/) || id.match(/^(\d+)$/);
         const targetId = match ? `tmdb-person-${match[1]}` : id;

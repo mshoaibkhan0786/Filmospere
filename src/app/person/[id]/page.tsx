@@ -1,42 +1,34 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getPersonById, getMoviesByPersonId } from '../../../lib/api';
-import PersonPageClient from '../../../components/PersonPageClient';
-import type { ActorDetails } from '../../../types';
-
-import { supabase } from '../../../lib/supabase';
+import { Suspense } from 'react';
+import { getPersonById } from '../../../lib/api';
+import { PersonPageContent, PersonPageSkeleton } from './PersonPageContent';
 
 type Props = {
     params: Promise<{ id: string }>
 };
 
-// Enable ISR with 30-day cache
-export const revalidate = 2592000;
+// Configure as dynamic server-rendered route
+export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
-
-export async function generateStaticParams() {
-    try {
-        const { data, error } = await supabase
-            .from('persons')
-            .select('data->>id')
-            .order('id', { ascending: false })
-            .limit(500); // Fewer persons to save build time
-
-        if (error || !data) return [];
-
-        return data.map((person: any) => ({
-            id: person.id?.toString(),
-        }));
-    } catch {
-        return [];
-    }
-}
 
 // SEO Metadata Generator
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     try {
-        const { id } = await params;
-        const person = await getPersonById(id);
+        const resolvedParams = await params;
+        const id = resolvedParams?.id;
+        if (!id) {
+            return {
+                title: 'Person Not Found - Filmospere',
+            };
+        }
+
+        let person = null;
+        try {
+            person = await getPersonById(id);
+        } catch (e) {
+            console.error('getPersonById failed in generateMetadata:', e);
+        }
 
         if (!person) {
             return {
@@ -44,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             };
         }
 
-        const name = person.name;
+        const name = person.name || 'Unknown Person';
         // "No Index" Logic for Thin Content (matching Vite)
         if (!person.biography || person.biography.length < 50) {
             return {
@@ -87,19 +79,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     } catch (e) {
         console.error('generateMetadata failed for PersonPage:', e);
         return {
-            title: 'Error - Filmosphere',
+            title: 'Person Not Found - Filmospere',
         };
     }
 }
 
-import { Suspense } from 'react';
-import { PersonPageContent, PersonPageSkeleton } from './PersonPageContent';
-
 export default async function PersonPage({ params }: Props) {
-    const { id } = await params;
+    let id: string | null = null;
+    try {
+        const resolvedParams = await params;
+        id = resolvedParams?.id ?? null;
+    } catch (e) {
+        console.error('Failed to resolve params in PersonPage:', e);
+        notFound();
+    }
 
-    // React Suspense guarantees Netlify receives the first byte instantly (Skeleton),
-    // bypassing the strict 10.0-second serverless execution limits for subsequent DB tasks.
+    if (!id) {
+        notFound();
+    }
+
+    // React Suspense guarantees first byte is delivered instantly via skeleton
     return (
         <Suspense fallback={<PersonPageSkeleton />}>
             <PersonPageContent id={id} />

@@ -1,8 +1,8 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { notFound } from 'next/navigation';
 import { getPersonById, getMoviesByPersonId } from '../../../lib/api';
 import PersonPageClient from '../../../components/PersonPageClient';
-import type { ActorDetails } from '../../../types';
+import type { ActorDetails, Movie } from '../../../types';
 import { User } from 'lucide-react';
 
 interface Props {
@@ -11,11 +11,37 @@ interface Props {
 
 // 1. Streaming Component that fetches everything
 async function PersonPageContent({ id }: Props) {
-    // Fire requests in parallel to avoid sequential latency penalties
-    const personPromise = getPersonById(id);
-    const moviesPromise = getMoviesByPersonId(id);
+    if (!id) {
+        notFound();
+    }
 
-    const [personData, movies] = await Promise.all([personPromise, moviesPromise]);
+    let personData: any = null;
+    let movies: Movie[] = [];
+
+    try {
+        const [personResult, moviesResult] = await Promise.allSettled([
+            getPersonById(id),
+            getMoviesByPersonId(id)
+        ]);
+
+        if (personResult.status === 'fulfilled') {
+            personData = personResult.value;
+        } else {
+            console.error('getPersonById failed in PersonPageContent:', personResult.reason);
+        }
+
+        if (moviesResult.status === 'fulfilled' && Array.isArray(moviesResult.value)) {
+            movies = moviesResult.value;
+        } else {
+            if (moviesResult.status === 'rejected') {
+                console.error('getMoviesByPersonId failed in PersonPageContent:', moviesResult.reason);
+            }
+            movies = [];
+        }
+    } catch (err) {
+        console.error('Unexpected error fetching person data in PersonPageContent:', err);
+        notFound();
+    }
 
     if (!personData) {
         notFound();
@@ -26,7 +52,7 @@ async function PersonPageContent({ id }: Props) {
     const schemaData = {
         "@context": "https://schema.org",
         "@type": "Person",
-        "name": person.name,
+        "name": person.name || '',
         "image": person.profile_path ? `https://image.tmdb.org/t/p/w500${person.profile_path}` : undefined,
         "description": person.biography ? person.biography.substring(0, 500) : undefined,
         "birthDate": person.birthday,

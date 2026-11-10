@@ -9,6 +9,16 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_A
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
-        fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' })
+        fetch: (url, options) => {
+            const method = options?.method?.toUpperCase() || 'GET';
+            // Only apply ISR caching on GET requests where cache is not explicitly overridden
+            if (method === 'GET' && !options?.cache) {
+                return fetch(url, {
+                    ...options,
+                    next: { ...(options as any)?.next, revalidate: 3600 }
+                });
+            }
+            return fetch(url, options);
+        }
     }
 });

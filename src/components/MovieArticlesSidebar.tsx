@@ -8,9 +8,17 @@ interface Props {
 }
 
 export default async function MovieArticlesSidebar({ movieId }: Props) {
-    const articles = await getArticlesByMovieId(movieId);
+    if (!movieId) return null;
 
-    if (!articles || articles.length === 0) return null;
+    let articles: any[] = [];
+    try {
+        articles = await getArticlesByMovieId(movieId);
+    } catch (e) {
+        console.error('getArticlesByMovieId error in sidebar:', e);
+        return null;
+    }
+
+    if (!articles || !Array.isArray(articles) || articles.length === 0) return null;
 
     return (
         <div style={{ marginTop: '2rem', animation: 'fadeIn 0.5s ease' }}>

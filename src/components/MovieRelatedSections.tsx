@@ -21,14 +21,40 @@ export default async function MovieRelatedSections({ movie }: Props) {
     ];
     const industryTag = movie.tags?.find(t => INDUSTRIES.includes(t)) || null;
 
-    // Parallel fetch for related data
-    const [recommendations, genreMovies, cast1Movies, cast2Movies, industryMovies] = await Promise.all([
-        getRecommendations(movie),
-        genreTag ? getMoviesByTag(genreTag) : Promise.resolve([]),
-        cast1 ? getMoviesByPersonId(cast1.id) : Promise.resolve([]),
-        cast2 ? getMoviesByPersonId(cast2.id) : Promise.resolve([]),
-        industryTag ? getMoviesByTag(industryTag) : Promise.resolve([])
-    ]);
+    // Parallel fetch for related data with error handling
+    let recommendations: Movie[] = [];
+    let genreMovies: Movie[] = [];
+    let cast1Movies: Movie[] = [];
+    let cast2Movies: Movie[] = [];
+    let industryMovies: Movie[] = [];
+
+    try {
+        const [recommendationsRes, genreMoviesRes, cast1MoviesRes, cast2MoviesRes, industryMoviesRes] = await Promise.allSettled([
+            getRecommendations(movie),
+            genreTag ? getMoviesByTag(genreTag) : Promise.resolve([]),
+            cast1?.id ? getMoviesByPersonId(cast1.id) : Promise.resolve([]),
+            cast2?.id ? getMoviesByPersonId(cast2.id) : Promise.resolve([]),
+            industryTag ? getMoviesByTag(industryTag) : Promise.resolve([])
+        ]);
+
+        if (recommendationsRes.status === 'fulfilled' && Array.isArray(recommendationsRes.value)) {
+            recommendations = recommendationsRes.value;
+        }
+        if (genreMoviesRes.status === 'fulfilled' && Array.isArray(genreMoviesRes.value)) {
+            genreMovies = genreMoviesRes.value;
+        }
+        if (cast1MoviesRes.status === 'fulfilled' && Array.isArray(cast1MoviesRes.value)) {
+            cast1Movies = cast1MoviesRes.value;
+        }
+        if (cast2MoviesRes.status === 'fulfilled' && Array.isArray(cast2MoviesRes.value)) {
+            cast2Movies = cast2MoviesRes.value;
+        }
+        if (industryMoviesRes.status === 'fulfilled' && Array.isArray(industryMoviesRes.value)) {
+            industryMovies = industryMoviesRes.value;
+        }
+    } catch (e) {
+        console.error('Error in MovieRelatedSections fetch:', e);
+    }
 
     const extraSections = [];
 
