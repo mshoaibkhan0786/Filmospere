@@ -63,23 +63,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
 }
 
-// Enable ISR with 30-day cache
-export const revalidate = 2592000;
-export const dynamicParams = true; // Allow other params to be generated on demand
-
-export async function generateStaticParams() {
-    const sections = [
-        'trending',
-        'top-rated',
-        'new-releases',
-        'web-series',
-        'action'
-    ];
-
-    return sections.map((category) => ({
-        category: category,
-    }));
-}
+// Configure as dynamic server-rendered route for Cloudflare Workers
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
 
 export default async function SectionPage({ params }: Props) {
     const { category } = await params;
@@ -113,20 +99,14 @@ export default async function SectionPage({ params }: Props) {
         displayTitle = decodedCategory.charAt(0).toUpperCase() + decodedCategory.slice(1).toLowerCase(); // Fallback
     }
 
-    // Fetch Initial Data (Server Side)
-    // We pass this initial data to the client component to hydrate the state
-    const initialMovies = await getMoviesByTag(decodedCategory, 0, 20);
-
-    // If no movies found for a valid category, we still just render the empty state.
-    // If category is total nonsense, maybe 404? 
-    // Implementation Plan said: "Fetches initial batch... handles Not Found".
-    // For sections, usually valid even if empty, but let's stick to lenient rendering.
+    // Fetch Initial Data (Server Side) limited to 12 items to protect Cloudflare 128MB memory limit
+    const initialMovies = await getMoviesByTag(decodedCategory, 0, 12);
 
     return (
         <SectionPageClient
             title={displayTitle}
             initialMovies={initialMovies}
-            hasInitialMore={initialMovies.length >= 20}
+            hasInitialMore={initialMovies.length >= 12}
         />
     );
 }

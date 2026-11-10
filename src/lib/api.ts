@@ -118,7 +118,7 @@ export const getHomeData = async (): Promise<{ movies: Movie[], sections: any[] 
 
 import { cache } from 'react';
 
-// Lite selection for list views to massively save Supabase Egress
+// Lite selection for list views to massively save Supabase Egress and memory
 export const LITE_SELECT = `
     id,
     title:data->>title,
@@ -126,11 +126,15 @@ export const LITE_SELECT = `
     posterUrl:data->>posterUrl,
     poster_path:data->>poster_path,
     backdropUrl:data->>backdropUrl,
+    backdrop_path:data->>backdrop_path,
     images:data->images,
     releaseYear:data->>releaseYear,
+    release_date:data->>releaseDate,
     duration:data->>duration,
     rating:data->rating,
+    vote_average:data->rating,
     voteCount:data->voteCount,
+    overview:data->>description,
     tags:data->tags,
     isCopyrightFree:data->isCopyrightFree,
     contentType:data->>contentType,
@@ -139,24 +143,23 @@ export const LITE_SELECT = `
 
 export const mapLiteMovie = (row: any): Movie => ({
     id: row.id,
-    title: row.title || '',
-    slug: row.slug || '',
-    posterUrl: row.posterUrl || row.poster_path || (row.images && row.images[0]) || '',
-    backdropUrl: row.backdropUrl,
-    images: row.images || (row.backdropUrl ? [row.backdropUrl] : []),
-    releaseYear: row.releaseYear || '',
-    duration: row.duration || '',
-    rating: typeof row.rating === 'number' ? row.rating : Number(row.rating) || 0,
+    title: row.title || row.data?.title || '',
+    slug: row.slug || row.data?.slug || '',
+    posterUrl: row.posterUrl || row.poster_path || (row.images && row.images[0]) || row.data?.posterUrl || '',
+    backdropUrl: row.backdropUrl || row.backdrop_path || row.data?.backdropUrl,
+    images: (row.images || (row.backdropUrl ? [row.backdropUrl] : [])).slice(0, 12),
+    releaseYear: row.releaseYear || row.release_date || row.data?.releaseYear || '',
+    duration: row.duration || row.data?.duration || '',
+    rating: typeof row.rating === 'number' ? row.rating : (typeof row.vote_average === 'number' ? row.vote_average : Number(row.rating) || 0),
     voteCount: typeof row.voteCount === 'number' ? row.voteCount : Number(row.voteCount) || 0,
-    tags: row.tags || [],
-    isCopyrightFree: row.isCopyrightFree === 'true' || row.isCopyrightFree === true,
-    contentType: row.contentType || 'movie',
-    director: row.director || '',
-    cast: [] // Omitted for bandwidth
+    tags: row.tags || row.data?.tags || [],
+    isCopyrightFree: row.isCopyrightFree === 'true' || row.isCopyrightFree === true || row.data?.isCopyrightFree === true,
+    contentType: row.contentType || row.data?.contentType || 'movie',
+    director: row.director || row.data?.director || '',
+    cast: [] // Omitted for bandwidth and memory
 } as unknown as Movie);
 
 export const getMovieById = cache(async (rawId: string): Promise<Movie | null> => {
-    // console.log('debug: getMovieById called with:', rawId);
     try {
         if (!rawId || typeof rawId !== 'string') return null;
         let id = rawId.trim();
@@ -173,39 +176,49 @@ export const getMovieById = cache(async (rawId: string): Promise<Movie | null> =
         const yearMatch = id.match(/-(19|20)\d{2}$/);
         const cleanSlug = yearMatch ? id.substring(0, yearMatch.index) : null;
 
-        // Execute all probable index hits simultaneously to avoid 5x sequential Network RTT latency
-        const [exactSlugRes, idRes, normSlugRes, cleanSlugRes, spacedTitleRes, fuzzyTitleRes] = await Promise.all([
-            // 1. Try Exact Match (Slug)
-            supabase.from('movies').select('*').eq('data->>slug', id).maybeSingle(),
-            // 2. Try ID Match
-            !id.includes(' ') ? supabase.from('movies').select('*').eq('id', id).maybeSingle() : Promise.resolve({ data: null }),
-            // 3. Fallback: Normalize Slug
-            id !== normalized ? supabase.from('movies').select('*').eq('data->>slug', normalized).maybeSingle() : Promise.resolve({ data: null }),
-            // 4. Fallback: Year Stripped
-            cleanSlug ? supabase.from('movies').select('*').eq('data->>slug', cleanSlug).maybeSingle() : Promise.resolve({ data: null }),
-            // 5. Fallback: Smarter Title Match
-            supabase.from('movies').select('*').ilike('data->>title', spacedTitle).maybeSingle(),
-            // 6. Original Fuzzy Title Match
-            id !== spacedTitle ? supabase.from('movies').select('*').ilike('data->>title', id).maybeSingle() : Promise.resolve({ data: null }),
-        ]);
+        // Sequenced lookup (exact indexed hit first) avoids launching 6 heavy queries concurrently
+        // Explicitly select 'id, data' instead of 'select(*)' to avoid pulling unwanted table metadata
+        let res = await supabase
+            .from('movies')
+            .select('id, data')
+            .eq('data->>slug', id)
+            .maybeSingle();
 
-        // Prioritize results based on accuracy hierarchy
-        let data = exactSlugRes.data 
-            || idRes.data 
-            || normSlugRes.data 
-            || cleanSlugRes.data 
-            || spacedTitleRes.data 
-            || fuzzyTitleRes.data;
-
-        // 7. EDGE-COMPATIBLE FALLBACK (Static Data via DB or fetch)
-        // If DB fails or returns nothing, we used to read local JSON files.
-        // On Edge runtime (Cloudflare Pages), 'fs' is unavailable. 
-        // For now, return null to let the 404/client handle it, or we could fetch from a CDN.
-        if (!data) {
-            console.warn(`[getMovieById] DB lookup failed for '${id}'. No local JSON fallback available on Edge.`);
+        if (!res?.data && !id.includes(' ')) {
+            res = await supabase
+                .from('movies')
+                .select('id, data')
+                .eq('id', id)
+                .maybeSingle();
         }
 
-        if (!data) {
+        if (!res?.data && id !== normalized) {
+            res = await supabase
+                .from('movies')
+                .select('id, data')
+                .eq('data->>slug', normalized)
+                .maybeSingle();
+        }
+
+        if (!res?.data && cleanSlug) {
+            res = await supabase
+                .from('movies')
+                .select('id, data')
+                .eq('data->>slug', cleanSlug)
+                .maybeSingle();
+        }
+
+        if (!res?.data) {
+            res = await supabase
+                .from('movies')
+                .select('id, data')
+                .ilike('data->>title', spacedTitle)
+                .limit(1)
+                .maybeSingle();
+        }
+
+        const data = res?.data;
+        if (!data || !data.data) {
             console.warn(`getMovieById: Movie not found for id='${id}'`);
             return null;
         }
@@ -214,9 +227,11 @@ export const getMovieById = cache(async (rawId: string): Promise<Movie | null> =
         return {
             ...m,
             id: data.id,
-            cast: m.cast || [],
+            // Limit cast and media items to 12 objects to protect the 128 MB isolate from memory exhaustion
+            cast: (m.cast || []).slice(0, 12),
             tags: m.tags || [],
-            images: m.images || (m.backdropUrl ? [m.backdropUrl] : []),
+            images: (m.images || (m.backdropUrl ? [m.backdropUrl] : [])).slice(0, 12),
+            videos: (m.videos || []).slice(0, 6),
         };
 
     } catch (e) {
@@ -227,12 +242,15 @@ export const getMovieById = cache(async (rawId: string): Promise<Movie | null> =
 
 export const getArticlesByMovieId = async (movieId: string): Promise<any[]> => {
     try {
+        if (!movieId) return [];
+        // Explicitly select only UI-needed columns and limit to 6
         const { data, error } = await supabase
             .from('articles')
-            .select('*')
+            .select('id, title, slug, image_url, created_at')
             .eq('related_movie_id', movieId)
             .eq('is_published', true)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(6);
 
         if (error) {
             console.error('getArticlesByMovieId error:', error);
@@ -250,7 +268,7 @@ export const getRecommendations = async (currentMovie: Movie): Promise<Movie[]> 
         if (!currentMovie.tags || currentMovie.tags.length === 0) return [];
 
         // Strategy: Fetch candidates that share the PRIMARY tag (first tag)
-        // This is efficient and ensures high relevance for the base set.
+        // Limited to 12 candidates to protect Cloudflare 128 MB isolate limit
         const primaryTag = currentMovie.tags[0];
 
         const { data, error } = await supabase
@@ -258,7 +276,7 @@ export const getRecommendations = async (currentMovie: Movie): Promise<Movie[]> 
             .select(LITE_SELECT)
             .neq('id', currentMovie.id)
             .contains('data', { tags: [primaryTag] })
-            .limit(40); // Fetch a pool of candidates
+            .limit(12);
 
         if (error || !data) {
             console.error('getRecommendations fetch error:', error);
@@ -282,13 +300,13 @@ export const getRecommendations = async (currentMovie: Movie): Promise<Movie[]> 
                 if (m.director && currentMovie.director && m.director === currentMovie.director) score += 5;
                 if (m.contentType === currentMovie.contentType) score += 2;
 
-                // Bonus for same exact primary tag (already guaranteed by fetch, but good for scoring relative to others if we expanded fetch)
+                // Bonus for same exact primary tag
                 if (mTags[0] === currentTags[0]) score += 1;
 
                 return { movie: m, score };
             })
             .sort((a, b) => b.score - a.score)
-            .slice(0, 10)
+            .slice(0, 12)
             .map(item => item.movie);
 
     } catch (e) {
@@ -297,9 +315,10 @@ export const getRecommendations = async (currentMovie: Movie): Promise<Movie[]> 
     }
 };
 
-export const getMoviesByTag = async (tag: string, start = 0, count = 20): Promise<Movie[]> => {
+export const getMoviesByTag = async (tag: string, start = 0, count = 12): Promise<Movie[]> => {
     try {
         const normalizedTag = tag.toLowerCase().trim();
+        const safeCount = Math.min(count, 12);
 
         // 1. Industry / Language Mapping (Case Insensitive)
         const industryMap: Record<string, string> = {
@@ -381,14 +400,14 @@ export const getMoviesByTag = async (tag: string, start = 0, count = 20): Promis
             query = query.order('data->releaseYear', { ascending: false });
         }
 
-        const { data, error } = await query.range(start, start + count - 1);
+        const { data, error } = await query.range(start, start + safeCount - 1);
 
         if (error || !data) {
             console.error('getMoviesByTag fetch error:', JSON.stringify(error, null, 2));
             return [];
         }
 
-        return data.map((row: any) => mapLiteMovie(row));
+        return data.slice(0, 12).map((row: any) => mapLiteMovie(row));
 
     } catch (e) {
         console.error('getMoviesByTag failed:', e);
@@ -487,11 +506,11 @@ export const getPersonById = async (id: string): Promise<any | null> => {
             // Try to find director ID via search if mostly unknown
         }
 
-        // 1. Try Supabase 'cast' table (Cache)
+        // 1. Try Supabase 'cast' table (Cache) - explicitly select only UI-needed columns
         if (tmdbId) {
             const { data: dbCast } = await supabase
                 .from('cast')
-                .select('*')
+                .select('tmdb_id, name, biography, image_url, birthday, place_of_birth, known_for_department, images')
                 .eq('tmdb_id', `tmdb-person-${tmdbId}`)
                 .maybeSingle();
 
@@ -504,40 +523,55 @@ export const getPersonById = async (id: string): Promise<any | null> => {
                     birthday: dbCast.birthday,
                     place_of_birth: dbCast.place_of_birth,
                     known_for_department: dbCast.known_for_department,
-                    images: dbCast.images // Assuming we stored this or similar
+                    images: (dbCast.images || []).slice(0, 12)
                 };
             }
         }
 
-        // 2. Fetch from TMDB (Enrichment)
+        // 2. Fetch from TMDB (Enrichment) with 4-second timeout
         if (!tmdbId && searchName) {
-            // Basic Search to resolve ID
-            const res = await fetch(`https://api.themoviedb.org/3/search/person?query=${encodeURIComponent(searchName)}`, {
-                headers: { Authorization: `Bearer ${TMDB_READ_TOKEN}`, accept: 'application/json' }
-            });
-            const data = await res.json();
-            if (data.results && data.results.length > 0) {
-                tmdbId = data.results[0].id.toString();
+            try {
+                // Basic Search to resolve ID
+                const res = await fetch(`https://api.themoviedb.org/3/search/person?query=${encodeURIComponent(searchName)}`, {
+                    headers: { Authorization: `Bearer ${TMDB_READ_TOKEN}`, accept: 'application/json' },
+                    signal: AbortSignal.timeout(4000)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.results && data.results.length > 0) {
+                        tmdbId = data.results[0].id.toString();
+                    }
+                }
+            } catch (err) {
+                console.warn('TMDB search person timed out or failed:', err);
             }
         }
 
         if (tmdbId) {
-            const res = await fetch(`https://api.themoviedb.org/3/person/${tmdbId}?append_to_response=images,movie_credits,external_ids`, {
-                headers: { Authorization: `Bearer ${TMDB_READ_TOKEN}`, accept: 'application/json' }
-            });
+            try {
+                const res = await fetch(`https://api.themoviedb.org/3/person/${tmdbId}?append_to_response=images,movie_credits,external_ids`, {
+                    headers: { Authorization: `Bearer ${TMDB_READ_TOKEN}`, accept: 'application/json' },
+                    signal: AbortSignal.timeout(4000)
+                });
 
-            if (!res.ok) return null;
+                if (!res.ok) return null;
 
-            const data = await res.json();
-            const images = data.images?.profiles?.map((p: any) => p.file_path) || [];
+                const data = await res.json();
+                const images = (data.images?.profiles?.map((p: any) => p.file_path) || []).slice(0, 12);
 
-            // Optional: Trigger background cache update to Supabase here if strict Next.js limitations allow, 
-            // but for now just return the fresh data.
-            return {
-                ...data,
-                images,
-                external_ids: data.external_ids // Pass this through
-            };
+                if (data.movie_credits?.cast) {
+                    data.movie_credits.cast = data.movie_credits.cast.slice(0, 12);
+                }
+
+                return {
+                    ...data,
+                    images,
+                    external_ids: data.external_ids || {}
+                };
+            } catch (err) {
+                console.warn('TMDB person details fetch timed out or failed:', err);
+                return null;
+            }
         }
 
         return null;
@@ -548,14 +582,13 @@ export const getPersonById = async (id: string): Promise<any | null> => {
     }
 };
 
-export const getMoviesByPersonId = async (id: string, start = 0, count = 40): Promise<Movie[]> => {
+export const getMoviesByPersonId = async (id: string, start = 0, count = 12): Promise<Movie[]> => {
     try {
         if (!id || typeof id !== 'string') return [];
-        // MATCHING VITE IMPLEMENTATION EXACTLY
+        // Cap count to 12 to protect Cloudflare 128 MB isolate limit
+        const safeCount = Math.min(count, 12);
         const match = id.match(/-(\d+)$/) || id.match(/^(\d+)$/);
         const targetId = match ? `tmdb-person-${match[1]}` : id;
-
-        console.log(`[SSR] fetchMoviesByPerson: Input=${id}, Target=${targetId}`);
 
         // Primary Strategy: JSONB Contains (Best for Indexing)
         // Matches exact object structure in the cast array
@@ -564,7 +597,7 @@ export const getMoviesByPersonId = async (id: string, start = 0, count = 40): Pr
             .select(LITE_SELECT)
             .contains('data', { cast: [{ id: targetId }] })
             .order('data->releaseYear', { ascending: false })
-            .range(start, start + count - 1);
+            .range(start, start + safeCount - 1);
 
         let { data, error } = await query;
 
@@ -574,13 +607,12 @@ export const getMoviesByPersonId = async (id: string, start = 0, count = 40): Pr
 
         // Fallback: Text Search if Primary returns empty (or error)
         if (!data || data.length === 0) {
-            // console.log('[SSR] Attempting fallback text search...');
             const fallbackQuery = supabase
                 .from('movies')
                 .select(LITE_SELECT)
                 .ilike('data->>cast', `%${targetId}%`)
                 .order('data->releaseYear', { ascending: false })
-                .range(start, start + count - 1);
+                .range(start, start + safeCount - 1);
 
             const fallbackResult = await fallbackQuery;
             data = fallbackResult.data;
@@ -588,7 +620,7 @@ export const getMoviesByPersonId = async (id: string, start = 0, count = 40): Pr
 
         if (!data) return [];
 
-        return data.map((row: any) => mapLiteMovie(row));
+        return data.slice(0, 12).map((row: any) => mapLiteMovie(row));
 
     } catch (e) {
         console.error('getMoviesByPersonId failed:', e);
@@ -630,20 +662,21 @@ export const getMoviesByIds = async (tmdbIds: string[]): Promise<Movie[]> => {
     }
 };
 
-export const getAllArticles = async (limit = 20): Promise<Article[]> => {
+export const getAllArticles = async (limit = 6): Promise<Article[]> => {
     try {
+        const safeLimit = Math.min(limit, 12);
         const { data, error } = await supabase
             .from('articles')
-            .select('*')
+            .select('id, slug, title, excerpt, image_url, author, category, tags, related_movie_id, created_at, is_published')
             .eq('is_published', true)
             .order('created_at', { ascending: false })
-            .limit(limit);
+            .limit(safeLimit);
 
         if (error) {
             console.error('getAllArticles failed:', error);
             return [];
         }
-        return data as Article[];
+        return (data || []) as Article[];
     } catch (e) {
         console.error('getAllArticles exception:', e);
         return [];

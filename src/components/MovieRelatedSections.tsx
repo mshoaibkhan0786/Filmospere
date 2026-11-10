@@ -31,10 +31,10 @@ export default async function MovieRelatedSections({ movie }: Props) {
     try {
         const [recommendationsRes, genreMoviesRes, cast1MoviesRes, cast2MoviesRes, industryMoviesRes] = await Promise.allSettled([
             getRecommendations(movie),
-            genreTag ? getMoviesByTag(genreTag) : Promise.resolve([]),
-            cast1?.id ? getMoviesByPersonId(cast1.id) : Promise.resolve([]),
-            cast2?.id ? getMoviesByPersonId(cast2.id) : Promise.resolve([]),
-            industryTag ? getMoviesByTag(industryTag) : Promise.resolve([])
+            genreTag ? getMoviesByTag(genreTag, 0, 12) : Promise.resolve([]),
+            cast1?.id ? getMoviesByPersonId(cast1.id, 0, 12) : Promise.resolve([]),
+            cast2?.id ? getMoviesByPersonId(cast2.id, 0, 12) : Promise.resolve([]),
+            industryTag ? getMoviesByTag(industryTag, 0, 12) : Promise.resolve([])
         ]);
 
         if (recommendationsRes.status === 'fulfilled' && Array.isArray(recommendationsRes.value)) {
@@ -60,7 +60,7 @@ export default async function MovieRelatedSections({ movie }: Props) {
 
     // 1. More [Genre]
     if (genreMovies.length > 0) {
-        const filtered = genreMovies.filter(m => m.id !== movie.id && isValidContent(m)).slice(0, 10);
+        const filtered = genreMovies.filter(m => m.id !== movie.id && isValidContent(m)).slice(0, 12);
         if (filtered.length > 0) {
             extraSections.push({
                 title: `More ${genreTag} Movies`,
@@ -72,7 +72,7 @@ export default async function MovieRelatedSections({ movie }: Props) {
 
     // 2. Starring [Cast 1]
     if (cast1Movies.length > 0 && cast1) {
-        const filtered = cast1Movies.filter(m => m.id !== movie.id && isValidContent(m)).slice(0, 10);
+        const filtered = cast1Movies.filter(m => m.id !== movie.id && isValidContent(m)).slice(0, 12);
         if (filtered.length > 0) {
             extraSections.push({
                 title: `Starring ${cast1.name}`,
@@ -84,7 +84,7 @@ export default async function MovieRelatedSections({ movie }: Props) {
 
     // 3. Starring [Cast 2]
     if (cast2Movies.length > 0 && cast2) {
-        const filtered = cast2Movies.filter(m => m.id !== movie.id && isValidContent(m)).slice(0, 10);
+        const filtered = cast2Movies.filter(m => m.id !== movie.id && isValidContent(m)).slice(0, 12);
         if (filtered.length > 0) {
             extraSections.push({
                 title: `Starring ${cast2.name}`,
@@ -96,7 +96,7 @@ export default async function MovieRelatedSections({ movie }: Props) {
 
     // 4. More from [Industry]
     if (industryMovies.length > 0 && industryTag) {
-        const filtered = industryMovies.filter(m => m.id !== movie.id && isValidContent(m)).slice(0, 10);
+        const filtered = industryMovies.filter(m => m.id !== movie.id && isValidContent(m)).slice(0, 12);
         if (filtered.length > 0) {
             extraSections.push({
                 title: `More from ${industryTag}`,
