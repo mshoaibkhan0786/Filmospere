@@ -22,37 +22,37 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    // Initialize state with URL param if available, fallback to prop
-    const [searchTerm, setSearchTerm] = useState(searchParams?.get('q') || searchParams?.get('search') || initialSearchTerm);
+    // Initialize state with URL param if on search page, fallback to prop
+    const [searchTerm, setSearchTerm] = useState(pathname === '/search' ? (searchParams?.get('q') || searchParams?.get('search') || initialSearchTerm) : '');
 
     const [isExpanded, setIsExpanded] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const ignoreParamsSync = useRef(false);
 
-    // Sync state with URL changes (e.g. Back button or reload)
+    // Sync state with URL / Pathname changes
     useEffect(() => {
-        // If we deliberately cleared the search via UI, ignore the immediate strict sync
-        // until the URL actually updates to empty.
         if (ignoreParamsSync.current) {
-            // Check if URL has actually caught up (became empty)
-            const query = searchParams?.get('q') || searchParams?.get('search') || '';
-            if (!query) {
-                // Reset flag once we match the empty state we requested
-                ignoreParamsSync.current = false;
-            }
+            ignoreParamsSync.current = false;
             return;
         }
 
-        const query = searchParams?.get('q') || searchParams?.get('search') || '';
-        if (query !== searchTerm) {
+        if (pathname !== '/search') {
+            // Away from search: clean and collapse navbar search
+            setSearchTerm('');
+            setIsExpanded(false);
+            if (debounceTimer.current) {
+                clearTimeout(debounceTimer.current);
+            }
+        } else {
+            // On search page: sync searchTerm with query param
+            const query = searchParams?.get('q') || searchParams?.get('search') || '';
             setSearchTerm(query);
-            // Auto-expand if there is a query
             if (query) {
                 setIsExpanded(true);
             }
         }
-    }, [searchParams]);
+    }, [pathname, searchParams]);
 
     // ... (rest of component)
 
@@ -203,6 +203,13 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                     ) : (
                         <Link
                             href="/"
+                            onClick={() => {
+                                setSearchTerm('');
+                                setIsExpanded(false);
+                                if (debounceTimer.current) {
+                                    clearTimeout(debounceTimer.current);
+                                }
+                            }}
                             className="navbar-logo-link"
                         >
                             <Logo suffix={pathname === '/articles' ? 'Read' : undefined} />
@@ -220,6 +227,13 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                     <div className="nav-links desktop-only">
                         <Link
                             href="/"
+                            onClick={() => {
+                                setSearchTerm('');
+                                setIsExpanded(false);
+                                if (debounceTimer.current) {
+                                    clearTimeout(debounceTimer.current);
+                                }
+                            }}
                             className={`nav-link ${pathname === '/' ? 'active' : ''}`}
                         >
                             Home

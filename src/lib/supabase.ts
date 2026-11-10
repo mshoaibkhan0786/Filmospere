@@ -8,25 +8,22 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_A
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        persistSession: typeof window !== 'undefined',
+        autoRefreshToken: typeof window !== 'undefined',
+    },
     global: {
         fetch: (url, options) => {
-            const method = options?.method?.toUpperCase() || 'GET';
-            
-            // Hard 4-second timeout to prevent queries from stalling Cloudflare waitUntil()
-            const timeoutSignal = AbortSignal.timeout(4000);
-            const signal = options?.signal
-                ? (typeof AbortSignal.any === 'function' ? AbortSignal.any([options.signal, timeoutSignal]) : timeoutSignal)
-                : timeoutSignal;
-
-            // Only apply ISR caching on GET requests where cache is not explicitly overridden
-            if (method === 'GET' && !options?.cache) {
-                return fetch(url, {
-                    ...options,
-                    signal,
-                    next: { ...(options as any)?.next, revalidate: 3600 }
-                });
+            // Safe timeout: 12 seconds (gives time for Supabase cold starts without hanging indefinitely)
+            let signal = options?.signal;
+            if (!signal && typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+                try {
+                    signal = AbortSignal.timeout(12000);
+                } catch {
+                    // Fallback
+                }
             }
-            return fetch(url, { ...options, signal });
+            return fetch(url, signal ? { ...options, signal } : options);
         }
     }
 });

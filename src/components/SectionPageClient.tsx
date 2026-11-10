@@ -9,44 +9,49 @@ import { isValidContent } from '../utils/formatUtils';
 
 interface SectionPageClientProps {
     title: string;
+    tag?: string;
     description?: string;
     initialMovies: Movie[];
     hasInitialMore: boolean;
 }
 
-const SectionPageClient: React.FC<SectionPageClientProps> = ({ title, description, initialMovies, hasInitialMore }) => {
+const SectionPageClient: React.FC<SectionPageClientProps> = ({ title, tag, description, initialMovies, hasInitialMore }) => {
     const router = useRouter();
     const [movies, setMovies] = useState<Movie[]>(initialMovies);
     const [hasMore, setHasMore] = useState(hasInitialMore);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
     const observerTarget = useRef<HTMLDivElement>(null);
+    const activeTag = tag || title;
 
     const loadMore = useCallback(async () => {
         if (isLoadingMore || !hasMore) return;
         setIsLoadingMore(true);
 
         const currentLength = movies.length;
-        const BATCH_SIZE = 50; // Match Vite's batch size for consistency
+        const BATCH_SIZE = 24;
 
         try {
-            // ...
-            const res = await fetch(`/api/movies?tag=${encodeURIComponent(title)}&start=${currentLength}&count=${BATCH_SIZE}`);
+            const res = await fetch(`/api/movies?tag=${encodeURIComponent(activeTag)}&start=${currentLength}&count=${BATCH_SIZE}`);
             const newBatch: Movie[] = await res.json();
+
+            if (!Array.isArray(newBatch) || newBatch.length === 0) {
+                setHasMore(false);
+                return;
+            }
 
             if (newBatch.length < BATCH_SIZE) {
                 setHasMore(false);
             }
 
-            if (newBatch.length > 0) {
-                setMovies(prev => {
-                    const existingIds = new Set(prev.map(m => m.id));
-                    const uniqueNew = newBatch.filter(m => !existingIds.has(m.id));
-                    return [...prev, ...uniqueNew];
-                });
-            } else {
-                setHasMore(false);
-            }
+            setMovies(prev => {
+                const existingIds = new Set(prev.map(m => m.id));
+                const uniqueNew = newBatch.filter(m => !existingIds.has(m.id));
+                if (uniqueNew.length === 0) {
+                    setHasMore(false);
+                }
+                return [...prev, ...uniqueNew];
+            });
 
         } catch (e) {
             console.error("Load more failed", e);
@@ -54,7 +59,7 @@ const SectionPageClient: React.FC<SectionPageClientProps> = ({ title, descriptio
         } finally {
             setIsLoadingMore(false);
         }
-    }, [isLoadingMore, hasMore, movies.length, title]);
+    }, [isLoadingMore, hasMore, movies.length, activeTag]);
 
     useEffect(() => {
         const observer = new IntersectionObserver(

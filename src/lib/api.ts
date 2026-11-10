@@ -3,67 +3,71 @@ import { supabase } from './supabase';
 import type { Movie, Article } from '../types';
 
 export const getHomeData = async (): Promise<{ movies: Movie[], sections: any[] }> => {
-    // 1. Try Cache First
-    const { data: cacheData, error: cacheError } = await supabase
-        .from('home_cache')
-        .select('content')
-        .eq('id', 'home_feed')
-        .single();
+    try {
+        // 1. Try Cache First
+        const { data: cacheData, error: cacheError } = await supabase
+            .from('home_cache')
+            .select('content')
+            .eq('id', 'home_feed')
+            .maybeSingle();
 
-    if (cacheData && cacheData.content && !cacheError) {
-        const rawSections = (cacheData.content as any).sections || [];
-        const cachedMovies: Movie[] = [];
-        const seenIds = new Set<string>();
+        if (cacheData && cacheData.content && !cacheError) {
+            const rawSections = (cacheData.content as any).sections || [];
+            const cachedMovies: Movie[] = [];
+            const seenIds = new Set<string>();
 
-        // Normalize sections to ensure every movie object has valid fields (posterUrl, etc.)
-        const cachedSections = rawSections.map((section: any) => {
-            if (section.data && Array.isArray(section.data)) {
-                const cleanedData = section.data.map((m: any) => ({
-                    ...m,
-                    id: m.id,
-                    title: m.title || m.name || m.data?.title || '',
-                    // Robust poster fallback: try standard, then TMDB, then first image, then nested
-                    posterUrl: m.posterUrl || '',
-                    cast: m.cast || [],
-                    tags: m.tags || [],
-                    rating: m.rating || 0,
-                    voteCount: m.voteCount || 0,
-                    images: m.images || (m.backdropUrl ? [m.backdropUrl] : []),
-                    data: undefined // Clean up
-                }));
-                return { ...section, data: cleanedData };
+            // Normalize sections to ensure every movie object has valid fields (posterUrl, etc.)
+            const cachedSections = rawSections.map((section: any) => {
+                if (section.data && Array.isArray(section.data)) {
+                    const cleanedData = section.data.map((m: any) => ({
+                        ...m,
+                        id: m.id,
+                        title: m.title || m.name || m.data?.title || '',
+                        // Robust poster fallback: try standard, then TMDB, then first image, then nested
+                        posterUrl: m.posterUrl || '',
+                        cast: m.cast || [],
+                        tags: m.tags || [],
+                        rating: m.rating || 0,
+                        voteCount: m.voteCount || 0,
+                        images: m.images || (m.backdropUrl ? [m.backdropUrl] : []),
+                        data: undefined // Clean up
+                    }));
+                    return { ...section, data: cleanedData };
+                }
+                return section;
+            });
+
+            // Collect unique movies for the main list
+            cachedSections.forEach((section: any) => {
+                if (section.data) {
+                    section.data.forEach((m: Movie) => {
+                        if (!seenIds.has(m.id)) {
+                            seenIds.add(m.id);
+                            cachedMovies.push(m);
+                        }
+                    });
+                }
+            });
+
+            if (cachedMovies.length > 0) {
+                return { movies: cachedMovies, sections: cachedSections };
             }
-            return section;
-        });
-
-        // Collect unique movies for the main list
-        cachedSections.forEach((section: any) => {
-            if (section.data) {
-                section.data.forEach((m: Movie) => {
-                    if (!seenIds.has(m.id)) {
-                        seenIds.add(m.id);
-                        cachedMovies.push(m);
-                    }
-                });
-            }
-        });
-
-        if (cachedMovies.length > 0) {
-            return { movies: cachedMovies, sections: cachedSections };
         }
+    } catch (cacheErr) {
+        console.warn('Home cache read error:', cacheErr);
     }
 
     // 2. Fallback: Fetch Core Lists
     console.log('⚠️ Home Cache Miss - Fetching from DB');
 
     try {
-        const safeSelect = 'id, data';
+        const safeSelect = LITE_SELECT;
 
         // Execute queries safely
         const [s1, s2, s3] = await Promise.all([
-            supabase.from('movies').select(safeSelect).order('data->voteCount', { ascending: false }).limit(50),
-            supabase.from('movies').select(safeSelect).order('data->releaseYear', { ascending: false }).order('data->voteCount', { ascending: false }).limit(50),
-            supabase.from('movies').select(safeSelect).eq('data->>contentType', 'series').order('data->voteCount', { ascending: false }).limit(50)
+            supabase.from('movies').select(safeSelect).order('data->voteCount', { ascending: false }).limit(30),
+            supabase.from('movies').select(safeSelect).order('data->releaseYear', { ascending: false }).order('data->voteCount', { ascending: false }).limit(30),
+            supabase.from('movies').select(safeSelect).contains('data', { contentType: 'series' }).limit(30)
         ]);
 
         // Log errors if any
@@ -77,25 +81,11 @@ export const getHomeData = async (): Promise<{ movies: Movie[], sections: any[] 
         const seenIds = new Set<string>();
 
         allRows.forEach((row: any) => {
-            if (!row || !row.data) return;
-            if (!seenIds.has(row.id)) {
-                seenIds.add(row.id);
-                const movieData = row.data || {};
-
-                // Helper to ensure array
-                const ensureArray = (arr: any) => Array.isArray(arr) ? arr : [];
-
-                movies.push({
-                    ...movieData,
-                    id: row.id,
-                    posterUrl: (movieData.posterUrl && movieData.posterUrl !== 'N/A') ? movieData.posterUrl : (movieData.poster_path || (movieData.images && movieData.images[0]) || ''),
-                    cast: ensureArray(movieData.cast),
-                    tags: ensureArray(movieData.tags),
-                    images: ensureArray(movieData.images).length > 0 ? ensureArray(movieData.images) : (movieData.backdropUrl ? [movieData.backdropUrl] : []),
-                    rating: typeof movieData.rating === 'number' ? movieData.rating : 0,
-                    voteCount: typeof movieData.voteCount === 'number' ? movieData.voteCount : 0,
-                    certification: movieData.certification || undefined
-                });
+            if (!row) return;
+            const mapped = mapLiteMovie(row);
+            if (!seenIds.has(mapped.id)) {
+                seenIds.add(mapped.id);
+                movies.push(mapped);
             }
         });
 
@@ -103,7 +93,7 @@ export const getHomeData = async (): Promise<{ movies: Movie[], sections: any[] 
         const currentYear = new Date().getFullYear();
         const sections = [
             { title: 'Trending Now', data: movies.slice(0, 20) },
-            { title: 'Latest Releases', data: movies.filter(m => m.releaseYear === currentYear).slice(0, 20) },
+            { title: 'Latest Releases', data: movies.filter(m => String(m.releaseYear) === String(currentYear)).slice(0, 20) },
             { title: 'Web Series', data: movies.filter(m => m.contentType === 'series').slice(0, 20) }
         ];
 
@@ -315,10 +305,10 @@ export const getRecommendations = async (currentMovie: Movie): Promise<Movie[]> 
     }
 };
 
-export const getMoviesByTag = async (tag: string, start = 0, count = 12): Promise<Movie[]> => {
+export const getMoviesByTag = async (tag: string, start = 0, count = 24): Promise<Movie[]> => {
     try {
         const normalizedTag = tag.toLowerCase().trim();
-        const safeCount = Math.min(count, 12);
+        const safeCount = Math.min(Math.max(count, 1), 50);
 
         // 1. Industry / Language Mapping (Case Insensitive)
         const industryMap: Record<string, string> = {
@@ -342,10 +332,7 @@ export const getMoviesByTag = async (tag: string, start = 0, count = 12): Promis
         const safeSelect = LITE_SELECT;
         let query: any = (supabase as any)
             .from('movies')
-            .select(safeSelect)
-            .not('data->>posterUrl', 'is', null)
-            .neq('data->>posterUrl', '')
-            .neq('data->>posterUrl', 'N/A');
+            .select(safeSelect);
 
         // 2. Logic Branching
         if (tag === 'South Indian' || normalizedTag === 'south indian') {
@@ -373,13 +360,9 @@ export const getMoviesByTag = async (tag: string, start = 0, count = 12): Promis
             query = query.order('data->releaseYear', { ascending: false });
         } else {
             // 3. General Tag Search (Case Insensitive Hack)
-
             let searchTag = tag;
             // Handle Sci-Fi variants
             if (normalizedTag === 'sci-fi' || normalizedTag === 'science-fiction' || normalizedTag === 'science fiction') {
-                // Try both standard TMDB tag 'Science Fiction' and common 'Sci-Fi'
-                // Since .contains is strict, we might need an .or() or just pick the most common.
-                // Assuming TMDB data: 'Science Fiction' is the standard Genre name.
                 searchTag = 'Science Fiction';
             }
 
@@ -387,15 +370,10 @@ export const getMoviesByTag = async (tag: string, start = 0, count = 12): Promis
                 ? 'Science Fiction'
                 : searchTag.charAt(0).toUpperCase() + searchTag.slice(1).toLowerCase();
 
-            // Optimization: Use .contains with the Title Cased tag.
-            // This allows Postgres to use the GIN index on 'data' -> 'tags',
-            // solving the statement timeout issue while maintaining case correctness
-            // (assuming tags are stored in Title Case, which is standard).
             query = query.contains('data', { tags: [titleCaseTag] });
         }
 
         // Apply Ordering for non-trending/latest/series-specific (if needed)
-        // Series might have their own sort, but releaseYear is fine.
         if (normalizedTag !== 'trending' && normalizedTag !== 'latest movies & series' && normalizedTag !== 'latest') {
             query = query.order('data->releaseYear', { ascending: false });
         }
@@ -407,7 +385,7 @@ export const getMoviesByTag = async (tag: string, start = 0, count = 12): Promis
             return [];
         }
 
-        return data.slice(0, 12).map((row: any) => mapLiteMovie(row));
+        return data.map((row: any) => mapLiteMovie(row));
 
     } catch (e) {
         console.error('getMoviesByTag failed:', e);
@@ -462,8 +440,8 @@ export const searchMovies = async (
             return { results: [], count: 0, actors: [] };
         }
 
-        // Fetch top 20 matches (range 0..19)
-        const safeLimit = Math.min(limit, 20);
+        // Enforce safe limit
+        const safeLimit = Math.min(Math.max(limit, 1), 50);
 
         // 2. Movie search matching trigram GIN index on data->>title with LITE_SELECT
         // Ordered by indexed data->>title (avoid unindexed data->voteCount sort and exact row counts to prevent memory spikes)

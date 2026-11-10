@@ -99,14 +99,15 @@ export default async function SectionPage({ params }: Props) {
         displayTitle = decodedCategory.charAt(0).toUpperCase() + decodedCategory.slice(1).toLowerCase(); // Fallback
     }
 
-    // Fetch Initial Data (Server Side) limited to 12 items to protect Cloudflare 128MB memory limit
-    const initialMovies = await getMoviesByTag(decodedCategory, 0, 12);
+    // Fetch Initial Data (Server Side)
+    const initialMovies = await getMoviesByTag(decodedCategory, 0, 24);
 
     return (
         <SectionPageClient
             title={displayTitle}
+            tag={decodedCategory}
             initialMovies={initialMovies}
-            hasInitialMore={initialMovies.length >= 12}
+            hasInitialMore={initialMovies.length >= 24}
         />
     );
 }

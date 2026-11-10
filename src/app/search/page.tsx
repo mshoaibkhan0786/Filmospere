@@ -36,7 +36,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
     let initialResults: any[] = [];
     if (query.length >= 2) {
-        const { results } = await searchMovies(query, 0, 20);
+        const { results } = await searchMovies(query, 0, 10);
         initialResults = results;
     }
 
