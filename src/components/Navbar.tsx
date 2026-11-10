@@ -83,26 +83,33 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Debounce timer ref
+    // Debounce timer & abort controller ref
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchTerm(value);
 
-        if (onSearch) {
-            onSearch(value);
-        } else {
-            // Debounced Navigation
-            if (debounceTimer.current) {
-                clearTimeout(debounceTimer.current);
-            }
+        // Cancel any in-flight search request immediately on each new keystroke
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
 
-            debounceTimer.current = setTimeout(() => {
+        if (debounceTimer.current) {
+            clearTimeout(debounceTimer.current);
+        }
+
+        debounceTimer.current = setTimeout(() => {
+            if (onSearch) {
+                onSearch(value);
+            } else {
+                // Debounced Navigation
                 const targetPath = value.trim() ? `/?search=${encodeURIComponent(value)}` : '/';
                 router.replace(targetPath, { scroll: false });
-            }, 300); // 300ms delay
-        }
+            }
+        }, 300); // 300ms delay
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

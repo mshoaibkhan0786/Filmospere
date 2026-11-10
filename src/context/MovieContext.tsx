@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { Movie, CastMember } from '../types';
 import { supabase } from '../lib/supabase';
+import { searchMovies as apiSearchMovies } from '../lib/api';
 
 import { ConfigContext } from './ConfigContext';
 
@@ -484,116 +485,8 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     }, [movies]);
 
-    const searchMovies = useCallback(async (rawQuery: string, offset: number = 0, limit: number = 42, type: 'all' | 'title' | 'broad' = 'all'): Promise<{ results: Movie[]; count: number }> => {
-        const query = rawQuery.trim();
-        if (!query) return { results: [], count: 0 };
-
-        try {
-            // Initialize promises
-            let titleQueryPromise = Promise.resolve({ data: [] as any[], error: null });
-            let broadQueryPromise = Promise.resolve({ data: [] as any[], error: null });
-
-            // Query A: Title Matches (Executes if type is 'all' or 'title')
-            // OPTIMIZATION: Select only needed fields AND alias them for easy mapping
-            if (type === 'all' || type === 'title') {
-                titleQueryPromise = supabase
-                    .from('movies')
-                    .select('id, title:data->title, posterUrl:data->posterUrl, releaseYear:data->releaseYear, rating:data->rating, slug:data->slug')
-                    .ilike('data->>title', `%${query}%`) // Reverted to data->>title as this is likely the indexed field
-                    .limit(50) as any;
-            }
-
-            // Query B: Broad Matches (Executes if type is 'all' or 'broad')
-            if ((type === 'all' || type === 'broad') && query.length >= 3) {
-                broadQueryPromise = supabase
-                    .from('movies')
-                    .select('id, title:data->title, posterUrl:data->posterUrl, releaseYear:data->releaseYear, rating:data->rating, slug:data->slug')
-                    .or(`data->>tags.ilike.%${query}%,data->>director.ilike.%${query}%,data->>cast.ilike.%${query}%`)
-                    .order('data->voteCount', { ascending: false })
-                    .limit(100) as any;
-            }
-
-            // execute parallel
-            const [titleRes, broadRes] = await Promise.all([titleQueryPromise, broadQueryPromise]);
-
-            if (titleRes.error) throw titleRes.error;
-            if (broadRes.error) throw broadRes.error;
-
-            // Fix: Map the ALIASED fields directly, do not look for r.data (which is now empty/undefined)
-            const titleMovies = titleRes.data ? titleRes.data.map(r => ({ ...r, id: r.id } as Movie)) : [];
-            const broadMovies = broadRes.data ? broadRes.data.map(r => ({ ...r, id: r.id } as Movie)) : [];
-
-            // Merge & Deduplicate
-            const seen = new Set<string>();
-            const merged: Movie[] = [];
-
-            // Add Title Matches FIRST
-            titleMovies.forEach(m => {
-                if (!seen.has(m.id)) {
-                    seen.add(m.id);
-                    merged.push(m);
-                }
-            });
-
-            // Add Broad Matches NEXT
-            broadMovies.forEach(m => {
-                if (!seen.has(m.id)) {
-                    seen.add(m.id);
-                    merged.push(m);
-                }
-            });
-
-            // Optional: Advanced Sorting within the Title group
-            // We want "Ligaw" (Exact) -> "Ligaw na ..." (Starts With) -> "... Ligaw" (Contains)
-            // But preserving the initial fetch order (which was just basic ilike) might be inconsistent
-            // Let's do a client-side sort to be sure.
-
-            const lowerQ = query.toLowerCase();
-            merged.sort((a, b) => {
-                const aTitle = a.title.toLowerCase();
-                const bTitle = b.title.toLowerCase();
-
-                const aExact = aTitle === lowerQ;
-                const bExact = bTitle === lowerQ;
-                if (aExact && !bExact) return -1;
-                if (!aExact && bExact) return 1;
-
-                const aStarts = aTitle.startsWith(lowerQ);
-                const bStarts = bTitle.startsWith(lowerQ);
-                if (aStarts && !bStarts) return -1;
-                if (!aStarts && bStarts) return 1;
-
-                // If both match title criteria equally (or neither do), rely on existing order (Broad matches are already pop-sorted)
-                // However, Title matches from DB aren't vote-sorted by default, so we might want to sort them by votes secondary?
-                // For now, let's trust the "Title First" bucket logic.
-                return 0;
-            });
-
-            // Pagination Slice
-            const pagedResults = merged.slice(offset, offset + limit);
-
-            return { results: pagedResults, count: merged.length };
-
-        } catch (err) {
-            console.warn('Smart Search failed, using Fallback:', err);
-            // FALLBACK SEARCH
-            const localData = await fetchLocalMovies();
-            const q = query.toLowerCase();
-
-            const matches = localData.filter(m => {
-                return m.title.toLowerCase().includes(q) ||
-                    m.tags?.some(t => t.toLowerCase().includes(q)) ||
-                    m.director?.toLowerCase().includes(q);
-            });
-
-            // Sort by popularity
-            matches.sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0));
-
-            return {
-                results: matches.slice(offset, offset + limit),
-                count: matches.length
-            };
-        }
+    const searchMovies = useCallback(async (rawQuery: string, offset: number = 0, limit: number = 10, type: 'all' | 'title' | 'broad' = 'all'): Promise<{ results: Movie[]; count: number }> => {
+        return apiSearchMovies(rawQuery, offset, limit, type);
     }, []);
 
     const addMovie = async (movie: Movie) => {

@@ -58,71 +58,42 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
     // BUT the original Home.tsx had `handleSearch` passed to Navbar? 
     // Wait, Navbar is in Layout. Navbar updates URL. HomeClient listens to URL. Correct.
 
-    // Execute Search with Debounce - PROGRESSIVE LOADING
+    // Execute Search with 300ms Debounce and AbortController
     useEffect(() => {
-        if (!searchQuery) {
+        if (!searchQuery.trim()) {
             setDbSearchResults([]);
             setTotalSearchCount(0);
-            setIsSearching(false); // Fix: Ensure loading state is reset when clearing search
+            setIsSearching(false);
             return;
         }
 
-        let isCancelled = false;
+        const abortController = new AbortController();
 
         const timer = setTimeout(async () => {
-            if (isCancelled) return;
+            if (abortController.signal.aborted) return;
 
             setIsSearching(true);
             try {
-                // TIMEOUT GUARD: Force stop if request takes too long (e.g. 15s)
-                const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Search timeout')), 15000)
-                );
+                // Execute optimized search: trigram indexed title + actor search via Promise.all, limit 10
+                const { results, count } = await searchMovies(searchQuery.trim(), 0, 10);
 
-                // STAGE 1: FAST SEARCH (Title Matches Only)
-                // This usually returns in <100ms
-                const titleFetch = searchMovies(searchQuery, 0, 42, 'title');
-                const { results: titleResults, count: titleCount } = await Promise.race([titleFetch, timeoutPromise]) as any;
-
-                if (!isCancelled) {
-                    setDbSearchResults(titleResults);
-                    setTotalSearchCount(titleCount);
+                if (!abortController.signal.aborted) {
+                    setDbSearchResults(results);
+                    setTotalSearchCount(count);
                 }
-
-                // STAGE 2: DEEP SEARCH (Cast, Director, Tags)
-                // Only if query is long enough to warrant it
-                if (!isCancelled && searchQuery.trim().length >= 3) {
-                    const broadFetch = searchMovies(searchQuery, 0, 42, 'broad');
-                    const { results: broadResults, count: broadCount } = await Promise.race([broadFetch, timeoutPromise]) as any;
-
-                    if (!isCancelled && broadResults.length > 0) {
-                        setDbSearchResults(prev => {
-                            // Merge and Deduplicate
-                            const seen = new Set(prev.map(m => m.id));
-                            const uniqueBroad = broadResults.filter((m: Movie) => !seen.has(m.id));
-
-                            // Correctly update count
-                            setTotalSearchCount(prevCount => prevCount + uniqueBroad.length);
-
-                            return [...prev, ...uniqueBroad];
-                        });
-                    }
-                }
-
-            } catch (err) {
-                if (!isCancelled) {
-                    console.error("Search failed or timed out:", err);
-                    // On error, we still keep partial results if any
+            } catch (err: any) {
+                if (err.name !== 'AbortError' && !abortController.signal.aborted) {
+                    console.error("Search failed:", err);
                 }
             } finally {
-                if (!isCancelled) {
+                if (!abortController.signal.aborted) {
                     setIsSearching(false);
                 }
             }
         }, 300);
 
         return () => {
-            isCancelled = true;
+            abortController.abort();
             clearTimeout(timer);
         };
     }, [searchQuery, searchMovies]);
@@ -139,7 +110,7 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
                 setIsLoadingMore(true);
                 const offset = dbSearchResults.length;
 
-                searchMovies(searchQuery, offset, 42)
+                searchMovies(searchQuery, offset, 10)
                     .then(({ results }) => {
                         if (results.length > 0) {
                             setDbSearchResults(prev => [...prev, ...results]);

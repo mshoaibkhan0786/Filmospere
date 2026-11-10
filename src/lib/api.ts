@@ -415,65 +415,102 @@ export const getMoviesByTag = async (tag: string, start = 0, count = 12): Promis
     }
 };
 
-export const searchMovies = async (query: string, offset = 0, limit = 20, type: 'all' | 'title' | 'broad' = 'all'): Promise<{ results: Movie[]; count: number }> => {
+export interface CastSearchResult {
+    id: string;
+    tmdb_id: string;
+    name: string;
+    image_url?: string;
+}
+
+// Optimized Actor/Person search using trigram GIN index on cast(name)
+export const searchCast = async (query: string, limit = 5): Promise<CastSearchResult[]> => {
     try {
-        if (!query.trim()) return { results: [], count: 0 };
+        const cleanQuery = query.trim();
+        if (!cleanQuery) return [];
 
-        const safeSelect = LITE_SELECT;
+        const { data, error } = await supabase
+            .from('cast')
+            .select('id, tmdb_id, name, image_url')
+            .ilike('name', `%${cleanQuery}%`)
+            .limit(limit);
 
-        // Initialize promises
-        let titleQueryPromise = Promise.resolve({ data: [] as any[], error: null });
-        let broadQueryPromise = Promise.resolve({ data: [] as any[], error: null });
-
-        // 1. Title Search (Executes if type is 'all' or 'title')
-        if (type === 'all' || type === 'title') {
-            titleQueryPromise = supabase
-                .from('movies')
-                .select(safeSelect)
-                .ilike('data->>title', `%${query}%`)
-                // .order('data->voteCount', { ascending: false }) // Optional: sort by popularity within titles
-                .range(offset, offset + limit - 1) as any;
+        if (error) {
+            console.error('searchCast error:', error);
+            return [];
         }
 
-        // 2. Broad Search (Executes if type is 'all' or 'broad')
-        // Only if query length >= 3 to avoid spam
-        if ((type === 'all' || type === 'broad') && query.trim().length >= 3) {
-            broadQueryPromise = supabase
-                .from('movies')
-                .select(safeSelect)
-                .or(`data->>tags.ilike.%${query}%,data->>director.ilike.%${query}%,data->>cast.ilike.%${query}%`)
-                .order('data->voteCount', { ascending: false })
-                .range(offset, offset + limit - 1) as any;
+        return (data || []) as CastSearchResult[];
+    } catch (e) {
+        console.error('searchCast failed:', e);
+        return [];
+    }
+};
+
+export const getPersonByName = searchCast;
+
+export const searchMovies = async (
+    query: string,
+    offset = 0,
+    limit = 10,
+    type: 'all' | 'title' | 'broad' = 'all'
+): Promise<{ results: Movie[]; count: number; actors?: CastSearchResult[] }> => {
+    try {
+        const cleanQuery = query.trim();
+        if (!cleanQuery) return { results: [], count: 0, actors: [] };
+
+        // Enforce maximum 10 items to prevent worker memory exhaustion
+        const safeLimit = Math.min(limit, 10);
+
+        // 1. Movie search matching trigram GIN index on data->>title with LITE_SELECT
+        const movieTitleQuery = supabase
+            .from('movies')
+            .select(LITE_SELECT)
+            .ilike('data->>title', `%${cleanQuery}%`)
+            .order('data->voteCount', { ascending: false })
+            .range(offset, offset + safeLimit - 1);
+
+        // 2. Person/Actor search matching trigram GIN index on cast(name)
+        const actorSearchPromise = searchCast(cleanQuery, 5);
+
+        // Run movie title search and actor search concurrently using Promise.all
+        const [titleRes, foundActors] = await Promise.all([
+            movieTitleQuery,
+            actorSearchPromise
+        ]);
+
+        const titleMovies = (titleRes.data || []).map((r: any) => mapLiteMovie(r));
+
+        // 3. For movies belonging to a found actor, lookup using .limit(10) with LITE_SELECT
+        let actorMovies: Movie[] = [];
+        if (foundActors.length > 0 && titleMovies.length < safeLimit) {
+            const topActor = foundActors[0];
+            const actorTargetId = topActor.tmdb_id || topActor.id;
+            if (actorTargetId) {
+                actorMovies = await getMoviesByPersonId(actorTargetId, 0, 10);
+            }
         }
 
-        const [titleRes, broadRes] = await Promise.all([titleQueryPromise, broadQueryPromise]);
-
-        const mapMovie = (r: any) => mapLiteMovie(r);
-
-        const titleMovies = titleRes.data ? titleRes.data.map(mapMovie) : [];
-        const broadMovies = broadRes.data ? broadRes.data.map(mapMovie) : [];
-
-        // Deduplicate
+        // Deduplicate and combine (Title matches first, then actor's movies)
         const seen = new Set<string>();
         const merged: Movie[] = [];
 
-        [...titleMovies, ...broadMovies].forEach(m => {
+        [...titleMovies, ...actorMovies].forEach(m => {
             if (!seen.has(m.id)) {
                 seen.add(m.id);
                 merged.push(m);
             }
         });
 
-        return {
-            results: merged.slice(0, limit),
-            // Approximation: If we got full page, assume there are more. 
-            // This is "infinite scroll friendly" enough.
-            count: (titleMovies.length + broadMovies.length) >= limit ? 100 : (titleMovies.length + broadMovies.length)
-        };
+        const results = merged.slice(0, safeLimit);
 
+        return {
+            results,
+            count: results.length,
+            actors: foundActors
+        };
     } catch (e) {
         console.error('searchMovies failed:', e);
-        return { results: [], count: 0 };
+        return { results: [], count: 0, actors: [] };
     }
 };
 

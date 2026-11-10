@@ -10,7 +10,8 @@ export async function GET(request: NextRequest) {
 
     // Route: Search
     if (query) {
-        const { results } = await searchMovies(query, start, count);
+        const safeLimit = Math.min(count, 10);
+        const { results } = await searchMovies(query, start, safeLimit);
         return NextResponse.json(results);
     }
 
