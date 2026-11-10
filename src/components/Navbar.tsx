@@ -23,7 +23,7 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
     const searchParams = useSearchParams();
 
     // Initialize state with URL param if available, fallback to prop
-    const [searchTerm, setSearchTerm] = useState(searchParams?.get('search') || initialSearchTerm);
+    const [searchTerm, setSearchTerm] = useState(searchParams?.get('q') || searchParams?.get('search') || initialSearchTerm);
 
     const [isExpanded, setIsExpanded] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -36,7 +36,7 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
         // until the URL actually updates to empty.
         if (ignoreParamsSync.current) {
             // Check if URL has actually caught up (became empty)
-            const query = searchParams?.get('search') || '';
+            const query = searchParams?.get('q') || searchParams?.get('search') || '';
             if (!query) {
                 // Reset flag once we match the empty state we requested
                 ignoreParamsSync.current = false;
@@ -44,7 +44,7 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
             return;
         }
 
-        const query = searchParams?.get('search') || '';
+        const query = searchParams?.get('q') || searchParams?.get('search') || '';
         if (query !== searchTerm) {
             setSearchTerm(query);
             // Auto-expand if there is a query
@@ -105,25 +105,30 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
             if (onSearch) {
                 onSearch(value);
             } else {
-                // Debounced Navigation
-                const targetPath = value.trim() ? `/?search=${encodeURIComponent(value)}` : '/';
-                router.replace(targetPath, { scroll: false });
+                // Debounced Navigation to dedicated search page
+                const trimmed = value.trim();
+                if (trimmed.length >= 2) {
+                    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+                } else if (trimmed.length === 0 && pathname === '/search') {
+                    router.push('/');
+                }
             }
         }, 300); // 300ms delay
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && searchTerm.trim()) {
-            setIsExpanded(false);
-            if (onSearch) {
-                // If parent handles search (e.g. live filter), let it do so.
-                // But for pure Next.js pages, we usually route. 
-                // Let's assume onSearch is for "Live Filter" scenarios if they exist.
-                // If we want global search, we ignore onSearch? 
-                // Let's support both: On Enter, if onSearch is defined, maybe we still route?
-                // Actually, let's just route if it's a global search intent.
-            } else {
-                router.push(`/?search=${encodeURIComponent(searchTerm.trim())}`);
+        if (e.key === 'Enter') {
+            const trimmed = searchTerm.trim();
+            if (trimmed.length >= 2) {
+                if (debounceTimer.current) {
+                    clearTimeout(debounceTimer.current);
+                }
+                setIsExpanded(false);
+                inputRef.current?.blur();
+                if (onSearch) {
+                    onSearch(trimmed);
+                }
+                router.push(`/search?q=${encodeURIComponent(trimmed)}`);
             }
         }
     };
@@ -277,10 +282,13 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                                 onClick={() => {
                                     ignoreParamsSync.current = true; // Prevent useEffect from reverting this immediately
                                     setSearchTerm('');
+                                    if (debounceTimer.current) {
+                                        clearTimeout(debounceTimer.current);
+                                    }
                                     if (onSearch) {
                                         onSearch('');
-                                    } else {
-                                        router.replace('/', { scroll: false });
+                                    } else if (pathname === '/search') {
+                                        router.push('/');
                                     }
                                     setIsExpanded(false);
                                 }}
@@ -291,7 +299,14 @@ const Navbar: React.FC<NavbarProps> = ({ onSearch, showBackArrow = false, initia
                                     if (e.key === 'Enter' || e.key === ' ') {
                                         ignoreParamsSync.current = true;
                                         setSearchTerm('');
-                                        if (onSearch) { onSearch(''); } else { router.replace('/', { scroll: false }); }
+                                        if (debounceTimer.current) {
+                                            clearTimeout(debounceTimer.current);
+                                        }
+                                        if (onSearch) {
+                                            onSearch('');
+                                        } else if (pathname === '/search') {
+                                            router.push('/');
+                                        }
                                         setIsExpanded(false);
                                     }
                                 }}

@@ -1,9 +1,6 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import MovieCard from './MovieCard';
-import MovieCardSkeleton from './MovieCardSkeleton';
 import FeaturedHero from './FeaturedHero';
 import HeroSkeleton from './HeroSkeleton';
 import HorizontalScrollSection from './HorizontalScrollSection';
@@ -19,115 +16,14 @@ interface HomeClientProps {
 }
 
 const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections }) => {
-    // We access global movie state for infinite scroll fetching (fetchMoviesByTag)
-    // But we might initialize logic with props to avoid waiting for Context if possible,
-    // though the original App relied heavily on Context.
-    // Ideally, we sync props to Context or just use props for initial render.
-
-    const { movies: contextMovies, isLoading, searchMovies, fetchMoviesByTag } = useMovies();
+    const { movies: contextMovies, isLoading, fetchMoviesByTag } = useMovies();
     const { sections: configSections } = useConfig();
-    const router = useRouter();
-    const searchParams = useSearchParams();
 
     // Prevent infinite fetches and track offsets
     const fetchedOffsets = useRef<Record<string, number>>({});
 
-    const initialQuery = searchParams.get('search') || '';
-    const [searchQuery, setSearchQuery] = useState(initialQuery);
-
     // Progressive rendering state
     const [renderedSectionCount, setRenderedSectionCount] = useState(3);
-
-    // Async Search State
-    const [dbSearchResults, setDbSearchResults] = useState<Movie[]>([]);
-    const [totalSearchCount, setTotalSearchCount] = useState(0);
-    const [isSearching, setIsSearching] = useState(false);
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
-
-    // Sync SearchParams -> State
-    useEffect(() => {
-        const query = searchParams.get('search') || '';
-        if (query !== searchQuery) {
-            setSearchQuery(query);
-        }
-    }, [searchParams]);
-
-    // Handle Search Interaction
-    // In Next.js App Router, we usually push to URL.
-    // This component receives the "onSearch" from Navbar implicitly via URL changes if Navbar pushes.
-    // BUT the original Home.tsx had `handleSearch` passed to Navbar? 
-    // Wait, Navbar is in Layout. Navbar updates URL. HomeClient listens to URL. Correct.
-
-    // Execute Search with 300ms Debounce and AbortController
-    useEffect(() => {
-        if (!searchQuery.trim()) {
-            setDbSearchResults([]);
-            setTotalSearchCount(0);
-            setIsSearching(false);
-            return;
-        }
-
-        const abortController = new AbortController();
-
-        const timer = setTimeout(async () => {
-            if (abortController.signal.aborted) return;
-
-            setIsSearching(true);
-            try {
-                // Execute optimized search: trigram indexed title + actor search via Promise.all, limit 10
-                const { results, count } = await searchMovies(searchQuery.trim(), 0, 10);
-
-                if (!abortController.signal.aborted) {
-                    setDbSearchResults(results);
-                    setTotalSearchCount(count);
-                }
-            } catch (err: any) {
-                if (err.name !== 'AbortError' && !abortController.signal.aborted) {
-                    console.error("Search failed:", err);
-                }
-            } finally {
-                if (!abortController.signal.aborted) {
-                    setIsSearching(false);
-                }
-            }
-        }, 300);
-
-        return () => {
-            abortController.abort();
-            clearTimeout(timer);
-        };
-    }, [searchQuery, searchMovies]);
-
-    // Infinite scroll for search results
-    useEffect(() => {
-        if (!searchQuery || dbSearchResults.length >= totalSearchCount || isLoadingMore) return;
-
-        const handleScroll = () => {
-            const scrollPosition = window.innerHeight + window.scrollY;
-            const documentHeight = document.documentElement.scrollHeight;
-
-            if (scrollPosition >= documentHeight * 0.8 && dbSearchResults.length < totalSearchCount) {
-                setIsLoadingMore(true);
-                const offset = dbSearchResults.length;
-
-                searchMovies(searchQuery, offset, 10)
-                    .then(({ results }) => {
-                        if (results.length > 0) {
-                            setDbSearchResults(prev => [...prev, ...results]);
-                        }
-                        setIsLoadingMore(false);
-                    })
-                    .catch(err => {
-                        console.error('Failed to load more:', err);
-                        setIsLoadingMore(false);
-                    });
-            }
-        };
-
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchQuery, dbSearchResults.length, totalSearchCount, isLoadingMore]);
 
 
     // MAIN CONTENT LOGIC
@@ -144,8 +40,6 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
     const activeMovies = contextMovies.length > 0 ? contextMovies : initialMovies;
 
     const sections = useMemo(() => {
-        if (searchQuery) return [];
-
         // 1. Get User Preferences Upfront
         let topGenre = '';
         try {
@@ -239,7 +133,7 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
         }
 
         return allSections;
-    }, [searchQuery, activeMovies, configSections]);
+    }, [activeMovies, configSections]);
 
     // Progressive loading of sections
     const observerTarget = useRef(null);
@@ -315,7 +209,7 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
 
     return (
         <>
-            {!searchQuery && (isLoading && !featuredMovie ? <HeroSkeleton /> : featuredMovie && <FeaturedHero movie={featuredMovie} />)}
+            {isLoading && !featuredMovie ? <HeroSkeleton /> : featuredMovie && <FeaturedHero movie={featuredMovie} />}
 
             <main className="container" style={{ position: 'relative', zIndex: 20 }}>
                 {/* SEO H1: Visually hidden but accessible to crawlers */}
@@ -333,118 +227,71 @@ const HomeClient: React.FC<HomeClientProps> = ({ initialMovies, initialSections 
                     Filmospere - Discover Movies, Web Series & Anime
                 </h1>
 
-                {searchQuery ? (
-                    <>
-                        <div className="home-search-results" style={{ marginBottom: '1rem' }}>
-                            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                                Search Results for "{searchQuery}"
-                            </h2>
-                            <p style={{ color: 'var(--text-secondary)', minHeight: '1.5rem' }}>
-                                {!isSearching && `Found ${totalSearchCount} results`}
-                            </p>
-                        </div>
-
-                        {isSearching && dbSearchResults.length === 0 ? (
-                            <div className="cols-6-grid">
-                                {[...Array(12)].map((_, i) => (
-                                    <MovieCardSkeleton key={i} />
-                                ))}
-                            </div>
-                        ) : dbSearchResults.length > 0 ? (
-                            <div className="cols-6-grid" style={{ marginBottom: '4rem' }}>
-                                {dbSearchResults.map((movie, index) => (
-                                    <MovieCard
-                                        key={`${movie.id}-${index}`}
-                                        movie={movie}
-                                        onClick={(movie) => router.push(`/movie/${(movie.slug || movie.id).replace(/\s+/g, '-')}`)}
-                                    />
-                                ))}
-
-                                {isSearching && (
-                                    [...Array(6)].map((_, i) => (
-                                        <MovieCardSkeleton key={`loading-more-${i}`} />
-                                    ))
-                                )}
-
-                                {isLoadingMore && !isSearching && (
-                                    [...Array(12)].map((_, i) => (
-                                        <MovieCardSkeleton key={`loading-${i}`} />
-                                    ))
-                                )}
-                            </div>
-                        ) : (
-                            <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-secondary)' }}>
-                                <p>No content found matching your criteria.</p>
-                            </div>
-                        )}
-                    </>
-                ) : (
-                    <div className="home-page-sections" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', marginTop: featuredMovie || isLoading ? '0' : '2rem' }}>
-                        {sections.length === 0 && isLoading && activeMovies.length === 0 ? (
-                            // Show Skeletons ONLY if we have absolutely no data (context or initial)
-                            ['Latest Movies & Series', 'Action', 'Drama'].map((title, index) => (
+                <div className="home-page-sections" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', marginTop: featuredMovie || isLoading ? '0' : '2rem' }}>
+                    {sections.length === 0 && isLoading && activeMovies.length === 0 ? (
+                        // Show Skeletons ONLY if we have absolutely no data (context or initial)
+                        ['Latest Movies & Series', 'Action', 'Drama'].map((title, index) => (
+                            <HorizontalScrollSection
+                                key={index}
+                                title={title}
+                                data={[]}
+                                loading={true}
+                            />
+                        ))
+                    ) : (
+                        <>
+                            {sections.slice(0, renderedSectionCount).map((section, index) => (
                                 <HorizontalScrollSection
-                                    key={index}
-                                    title={title}
-                                    data={[]}
-                                    loading={true}
-                                />
-                            ))
-                        ) : (
-                            <>
-                                {sections.slice(0, renderedSectionCount).map((section, index) => (
-                                    <HorizontalScrollSection
-                                        key={`${section.title}-${index}`}
-                                        title={section.title}
-                                        data={section.data}
-                                        loading={false}
-                                        linkTo={
-                                            section.id === 'series'
-                                                ? '/section/web-series'
-                                                : section.id === 'latest'
-                                                    ? '/section/new-releases'
-                                                    : (section.type === 'custom' && section.query
-                                                        ? `/section/${(() => {
-                                                            const slug = section.query.toLowerCase().replace(/\s+/g, '-');
-                                                            return slug === 'sci-fi' ? 'science-fiction' : slug;
-                                                        })()}`
-                                                        : (section.id ? `/section/${section.id}` : undefined))
-                                        }
-                                        onEndReached={() => {
-                                            const cleanTitle = section.title.split(' (')[0];
-                                            const config = configSections.find(c => c.title === cleanTitle);
+                                    key={`${section.title}-${index}`}
+                                    title={section.title}
+                                    data={section.data}
+                                    loading={false}
+                                    linkTo={
+                                        section.id === 'series'
+                                            ? '/section/web-series'
+                                            : section.id === 'latest'
+                                                ? '/section/new-releases'
+                                                : (section.type === 'custom' && section.query
+                                                    ? `/section/${(() => {
+                                                        const slug = section.query.toLowerCase().replace(/\s+/g, '-');
+                                                        return slug === 'sci-fi' ? 'science-fiction' : slug;
+                                                    })()}`
+                                                    : (section.id ? `/section/${section.id}` : undefined))
+                                    }
+                                    onEndReached={() => {
+                                        const cleanTitle = section.title.split(' (')[0];
+                                        const config = configSections.find(c => c.title === cleanTitle);
 
-                                            if (config && config.type === 'custom' && config.query) {
-                                                const tag = config.query;
-                                                const currentOffset = fetchedOffsets.current[tag] || 0;
+                                        if (config && config.type === 'custom' && config.query) {
+                                            const tag = config.query;
+                                            const currentOffset = fetchedOffsets.current[tag] || 0;
 
-                                                if (currentOffset === 0) {
-                                                    fetchedOffsets.current[tag] = 12;
-                                                }
-
-                                                const offsetToFetch = fetchedOffsets.current[tag] || 12;
-                                                fetchMoviesByTag(tag, offsetToFetch, 20);
-                                                fetchedOffsets.current[tag] = offsetToFetch + 20;
+                                            if (currentOffset === 0) {
+                                                fetchedOffsets.current[tag] = 12;
                                             }
-                                        }}
-                                    />
-                                ))}
-                                {renderedSectionCount < sections.length && (
-                                    <div
-                                        ref={observerTarget}
-                                        style={{ height: '20px', margin: '1rem 0' }}
-                                    />
-                                )}
-                            </>
-                        )}
 
-                        {!isLoading && sections.length === 0 && activeMovies.length === 0 && (
-                            <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-secondary)' }}>
-                                <p>No content available.</p>
-                            </div>
-                        )}
-                    </div>
-                )}
+                                            const offsetToFetch = fetchedOffsets.current[tag] || 12;
+                                            fetchMoviesByTag(tag, offsetToFetch, 20);
+                                            fetchedOffsets.current[tag] = offsetToFetch + 20;
+                                        }
+                                    }}
+                                />
+                            ))}
+                            {renderedSectionCount < sections.length && (
+                                <div
+                                    ref={observerTarget}
+                                    style={{ height: '20px', margin: '1rem 0' }}
+                                />
+                            )}
+                        </>
+                    )}
+
+                    {!isLoading && sections.length === 0 && activeMovies.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-secondary)' }}>
+                            <p>No content available.</p>
+                        </div>
+                    )}
+                </div>
             </main>
         </>
     );

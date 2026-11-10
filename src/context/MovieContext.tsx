@@ -485,7 +485,7 @@ export const MovieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
     }, [movies]);
 
-    const searchMovies = useCallback(async (rawQuery: string, offset: number = 0, limit: number = 10, type: 'all' | 'title' | 'broad' = 'all'): Promise<{ results: Movie[]; count: number }> => {
+    const searchMovies = useCallback(async (rawQuery: string, offset: number = 0, limit: number = 20, type: 'all' | 'title' | 'broad' = 'all'): Promise<{ results: Movie[]; count: number }> => {
         return apiSearchMovies(rawQuery, offset, limit, type);
     }, []);
 

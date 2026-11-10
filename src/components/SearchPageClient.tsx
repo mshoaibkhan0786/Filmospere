@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'; // Correct hook fo
 import { ArrowLeft } from 'lucide-react';
 import MovieCard from './MovieCard';
 import MovieCardSkeleton from './MovieCardSkeleton';
-import Footer from './Footer';
 import type { Movie } from '../types';
 
 interface SearchPageClientProps {
@@ -74,7 +73,8 @@ const SearchPageClient: React.FC<SearchPageClientProps> = ({ initialQuery, initi
                 setHasMore(false);
             }
 
-        } catch (e) {
+        } catch (e: any) {
+            if (e?.name === 'AbortError') return;
             console.error("Load more search failed", e);
             setHasMore(false);
         } finally {
@@ -107,8 +107,8 @@ const SearchPageClient: React.FC<SearchPageClientProps> = ({ initialQuery, initi
                         <h1 className="section-title" style={{ fontWeight: 'bold', margin: '0 0 0.5rem 0', fontSize: '2rem' }}>
                             Results for &quot;{initialQuery}&quot;
                         </h1>
-                        <p style={{ color: '#aaa', fontSize: '1rem' }}>
-                            {initialCount > 0 ? `Found ${initialCount} matches` : 'No matches found'}
+                        <p style={{ color: '#aaa', fontSize: '1rem', minHeight: '1.2rem', margin: 0 }}>
+                            {movies.length >= 20 ? 'Showing top results' : (movies.length === 0 ? 'No matches found' : '')}
                         </p>
                     </div>
 
@@ -156,7 +156,6 @@ const SearchPageClient: React.FC<SearchPageClientProps> = ({ initialQuery, initi
                     </div>
                 )}
             </main>
-            <Footer />
         </div>
     );
 };
